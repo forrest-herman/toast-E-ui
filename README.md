@@ -1,3 +1,14 @@
+# About Toast-E
+
+This App was created to interface with the Firmware on the Toast-E device.
+
+## Functionality
+
+- [ ] Send and receive BLE messages with the Raspberry Pi firmware
+- [x] Select a desired crispiness level
+
+# Development
+
 This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
 # Getting Started

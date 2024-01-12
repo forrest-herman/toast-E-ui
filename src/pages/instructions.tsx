@@ -15,7 +15,6 @@ import {
   Text,
   useColorScheme,
   View,
-  Dimensions,
 } from 'react-native';
 
 import {
@@ -25,9 +24,6 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
-
-import {CrispinessSelector} from './src/pages/crispinessSelector.tsx';
-import {ToastEHeader} from './src/components/Header.tsx';
 
 type SectionProps = PropsWithChildren<{
   title: string;
@@ -61,9 +57,12 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
-  const height = Dimensions.get('window').height;
 
   const [toastTarget, setToastTarget] = useState(0);
+
+  const backgroundStyle = {
+    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+  };
 
   return (
     <>
@@ -71,19 +70,32 @@ function App(): React.JSX.Element {
         edges={['top']}
         style={{flex: 0, backgroundColor: styles.header.backgroundColor}}
       />
-      <SafeAreaView
-        style={{
-          backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-          flex: 1,
-        }}>
-        {/* <StatusBar
+      <SafeAreaView style={backgroundStyle}>
+        <StatusBar
           barStyle={true ? 'light-content' : 'dark-content'}
           backgroundColor={styles.header.backgroundColor}
-        /> */}
-        <View style={{flex: 1}}>
-          <ToastEHeader />
-          <CrispinessSelector target={toastTarget} setTarget={setToastTarget} />
-        </View>
+        />
+        <ScrollView
+          contentInsetAdjustmentBehavior="automatic"
+          style={backgroundStyle}>
+          <Header />
+          <View style={backgroundStyle}>
+            <Section title="Step One">
+              Edit <Text style={styles.highlight}>App.tsx</Text> to change this
+              screen and then come back to see your edits.
+            </Section>
+            <Section title="See Your Changes">
+              <ReloadInstructions />
+            </Section>
+            <Section title="Debug">
+              <DebugInstructions />
+            </Section>
+            <Section title="Learn More">
+              Read the docs to discover what to do next:
+            </Section>
+            <LearnMoreLinks />
+          </View>
+        </ScrollView>
       </SafeAreaView>
     </>
   );
