@@ -1,10 +1,10 @@
 import * as React from 'react';
-import {Dimensions, Text, View} from 'react-native';
+import {Dimensions, Text, TouchableOpacity, View} from 'react-native';
 
 import {ToastPreviewCarousel} from '../components/toastPreview';
 import {styles} from '../styles';
 
-export const CrispinessSelector = ({target, setTarget}) => {
+export const CrispinessSelector = ({target, setTarget, navigation}) => {
   // const height = Dimensions.get('window').width;
 
   const darkenFactor = 1 + target / 10;
@@ -39,20 +39,22 @@ export const CrispinessSelector = ({target, setTarget}) => {
       </View>
       <ToastPreviewCarousel setTarget={setTarget} />
       <View style={{alignItems: 'center'}}>
-        <View
-          style={{
-            borderRadius: 65,
-            width: 130,
-            height: 130,
-            backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
-            justifyContent: 'center',
-            alignItems: 'center',
-            margin: 10,
-          }}>
-          <Text style={{color: '#F3F3F3', fontSize: 75, textAlign: 'center'}}>
-            {target.toFixed(1)}
-          </Text>
-        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Toasting')}>
+          <View
+            style={{
+              borderRadius: 65,
+              width: 130,
+              height: 130,
+              backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
+              justifyContent: 'center',
+              alignItems: 'center',
+              margin: 10,
+            }}>
+            <Text style={{color: '#F3F3F3', fontSize: 75, textAlign: 'center'}}>
+              {target.toFixed(1)}
+            </Text>
+          </View>
+        </TouchableOpacity>
         <Text style={{color: 'brown', fontSize: 20, textAlign: 'center'}}>
           Desired Crispiness
         </Text>
