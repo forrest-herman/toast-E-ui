@@ -114,12 +114,13 @@ function App(): React.JSX.Element {
     BleManager.checkState().then(state =>
       console.log(`current BLE state = '${state}'.`),
     );
+    // TODO: why this promise is failing?
     BleManager.start({showAlert: false})
       .then(() => {
         console.log('BleManager initialized');
         handleGetConnectedDevices();
       })
-      .catch();
+      .catch(error => console.log('BleManager failed to init', error));
     let stopDiscoverListener = BleManagerEmitter.addListener(
       'BleManagerDiscoverPeripheral',
       peripheral => {
@@ -299,7 +300,7 @@ const ToastSelectionScreen = ({navigation}) => {
       />
       <SafeAreaView
         style={{
-          backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
+          backgroundColor: false ? Colors.darker : Colors.lighter,
           flex: 1,
         }}>
         {/* <StatusBar

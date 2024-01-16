@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:ToastE_UI.xcodeproj">
+      location = "group:/Users/forrest/Documents/Github/ToastE_UI/ios/Toast-E.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:Pods/Pods.xcodeproj">
