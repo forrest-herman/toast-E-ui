@@ -33,9 +33,9 @@ export const ToastPreviewCarousel = ({setTarget}) => {
         data={images}
         scrollAnimationDuration={1000}
         onProgressChange={(_a, absoluteProgress) => {
-          let input = Math.round(absoluteProgress * 10) / 10;
+          let input = absoluteProgress / (images.length - 1);
           setTarget(input);
-          console.log('absoluteProgress:', input);
+          console.log('input:', input);
         }}
         pagingEnabled={false}
         snapEnabled={false}
@@ -47,7 +47,6 @@ export const ToastPreviewCarousel = ({setTarget}) => {
             style={{
               flex: 1,
               justifyContent: 'center',
-              backgroundColor: ['red', 'green', 'blue', 'pink'].at(index),
             }}>
             <Image
               style={{width: '100%', height: '100%'}}

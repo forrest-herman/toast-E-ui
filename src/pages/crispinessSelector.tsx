@@ -4,10 +4,15 @@ import {Dimensions, Text, TouchableOpacity, View} from 'react-native';
 import {ToastPreviewCarousel} from '../components/toastPreview';
 import {styles} from '../styles';
 
-export const CrispinessSelector = ({target, setTarget, navigation}) => {
+export const CrispinessSelector = ({
+  target,
+  setTarget,
+  navigation,
+  writeTargetCrispinessCharacteristic,
+}) => {
   // const height = Dimensions.get('window').width;
 
-  const darkenFactor = 1 + target / 10;
+  const darkenFactor = 1 + target;
   const [red, green, blue] = [156, 81, 37];
   // const [red, green, blue] = [255, 233, 219];
   const [r, g, b] = [
@@ -16,6 +21,14 @@ export const CrispinessSelector = ({target, setTarget, navigation}) => {
     blue / darkenFactor,
   ].map(Math.round);
   const a = 0.4 + target / 5;
+
+  const confirmCrispiness = () => {
+    writeTargetCrispinessCharacteristic(
+      {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
+      [target],
+    );
+    navigation.navigate('Toasting');
+  };
 
   return (
     <View
@@ -39,7 +52,7 @@ export const CrispinessSelector = ({target, setTarget, navigation}) => {
       </View>
       <ToastPreviewCarousel setTarget={setTarget} />
       <View style={{alignItems: 'center'}}>
-        <TouchableOpacity onPress={() => navigation.navigate('Toasting')}>
+        <TouchableOpacity onPress={confirmCrispiness}>
           <View
             style={{
               borderRadius: 65,
@@ -50,8 +63,8 @@ export const CrispinessSelector = ({target, setTarget, navigation}) => {
               alignItems: 'center',
               margin: 10,
             }}>
-            <Text style={{color: '#F3F3F3', fontSize: 75, textAlign: 'center'}}>
-              {target.toFixed(1)}
+            <Text style={{color: '#F3F3F3', fontSize: 70, textAlign: 'center'}}>
+              {Math.round(target * 100)}
             </Text>
           </View>
         </TouchableOpacity>
