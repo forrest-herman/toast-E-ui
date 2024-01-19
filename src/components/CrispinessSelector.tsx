@@ -1,7 +1,8 @@
-import * as React from 'react';
+import React, {useEffect, useState} from 'react';
 import {Dimensions, Text, TouchableOpacity, View} from 'react-native';
+import {Buffer} from 'buffer';
 
-import {ToastPreviewCarousel} from '../components/toastPreview';
+import {ToastPreviewCarousel} from './toastPreview';
 import {styles} from '../styles';
 
 export const CrispinessSelector = ({
@@ -9,8 +10,11 @@ export const CrispinessSelector = ({
   setTarget,
   navigation,
   writeTargetCrispinessCharacteristic,
+  startNotifications,
+  stopNotifications,
 }) => {
   // const height = Dimensions.get('window').width;
+  const [recentUpdates, setRecentUpdates] = useState([2, 2, 2, 2]);
 
   const darkenFactor = 1 + target;
   const [red, green, blue] = [156, 81, 37];
@@ -22,12 +26,26 @@ export const CrispinessSelector = ({
   ].map(Math.round);
   const a = 0.4 + target / 5;
 
+  // TODO: move this higher up so that toaster state BLE notification can trigger it.
+  const toastingBegins = () => {
+    navigation.navigate('Toasting');
+  };
+
   const confirmCrispiness = () => {
+    stopNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+
+    // TODO: figure out how to use peripheral id automatically
     writeTargetCrispinessCharacteristic(
       {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
       [target],
     );
-    navigation.navigate('Toasting');
+    // TODO: test this
+    writeTargetCrispinessCharacteristic(
+      {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
+      Buffer.from('testing here please').toJSON().data,
+    );
+
+    startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
   return (
@@ -50,9 +68,11 @@ export const CrispinessSelector = ({
         {/* <SvgComponent/> */}
         {/* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M512 176.1C512 203 490.4 224 455.1 224H448v224c0 17.67-14.33 32-32 32H96c-17.67 0-32-14.33-32-32V224H56.89C21.56 224 0 203 0 176.1C0 112 96 32 256 32S512 112 512 176.1z"/></svg> */}
       </View>
-      <ToastPreviewCarousel setTarget={setTarget} />
+      <ToastPreviewCarousel target={target} setTarget={setTarget} />
       <View style={{alignItems: 'center'}}>
-        <TouchableOpacity onPress={confirmCrispiness}>
+        <TouchableOpacity
+          onPress={confirmCrispiness}
+          onLongPress={toastingBegins}>
           <View
             style={{
               borderRadius: 65,

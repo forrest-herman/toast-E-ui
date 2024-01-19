@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
     fontSize: 30,
     textAlign: 'center',
     marginBottom: 20,
-    marginTop: 40,
+    marginTop: 20,
   },
   subtitle: {
     fontSize: 24,

@@ -1,4 +1,5 @@
 import {View, Text, Button} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 
 export const ToastEHeader = ({setSettingsModalVisible}) => {
   return (
@@ -12,15 +13,15 @@ export const ToastEHeader = ({setSettingsModalVisible}) => {
         }}>
         Toast-E
       </Text>
-      <Button
-        title={'Settings'}
+      <Icon
+        name={'cog'}
+        size={30}
+        color={'white'}
+        style={{position: 'absolute', right: 15, top: 25}}
         onPress={() => {
           setSettingsModalVisible(true);
-          // navigation.navigate('SettingsModal');
         }}
-        color={'white'}
       />
-      {/* </View> */}
     </View>
   );
 };

@@ -1,35 +1,10 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
-
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  createContext,
-  useCallback,
-} from 'react';
-import type {PropsWithChildren} from 'react';
+import React, {useState, useEffect, createContext} from 'react';
 import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-  Button,
-  Dimensions,
   Platform,
   NativeModules,
   NativeEventEmitter,
   PermissionsAndroid,
   Alert,
-  TouchableOpacity,
-  FlatList,
   Modal,
 } from 'react-native';
 import BleManager, {BleEventType} from 'react-native-ble-manager';
@@ -38,15 +13,6 @@ import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 
 import {bytesToString, stringToBytes} from 'convert-string';
-import {Buffer} from 'buffer';
-
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
 
 import {
   TIMER_SERVICE_UUID,
@@ -54,52 +20,28 @@ import {
   CRISPINESS_SERVICE_UUID,
   TARGET_CRISP_CHAR_UUID,
   CURRENT_CRISP_CHAR_UUID,
+  STATE_SERVICE_UUID,
+  STATE_CHAR_UUID,
   THERMOMETER_SERVICE_UUID,
   TEMP_CHAR_UUID,
+  CANCEL_CHAR_UUID,
 } from './src/actions/bleActions';
 
-import {CrispinessSelector} from './src/pages/crispinessSelector.tsx';
-import {ToastEHeader} from './src/components/Header.tsx';
-import {DeviceList} from './src/components/DeviceList';
-import {styles} from './src/styles/styles';
+// screens
+import ToastSelectionScreen from './src/screens/ToastSelectionScreen.tsx';
+import TimeRemainingScreen from './src/screens/TimeRemainingScreen.tsx';
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+// components
+import SettingsModal from './src/components/SettingsModal.tsx';
 
-const AppContext = createContext(null);
-
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-  return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
-  );
-}
+export const AppContext = createContext(null);
 
 const BleManagerModule = NativeModules.BleManager;
 const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 function App(): React.JSX.Element {
   const [currentCrispiness, setCurrentCrispiness] = useState(0);
+
   // ble
   const peripherals = new Map();
   const [isScanning, setIsScanning] = useState(false);
@@ -116,7 +58,8 @@ function App(): React.JSX.Element {
           setConnectedDevices(Array.from(peripherals.values()));
         }
       });
-    } else setConnectedDevices([]);
+    } //else setConnectedDevices([]);
+    console.log('connected devices: ', connectedDevices); // TODO: test this, can persist over reload?
   };
 
   useEffect(() => {
@@ -135,10 +78,10 @@ function App(): React.JSX.Element {
         handleGetConnectedDevices();
       })
       .catch(error => console.log('BleManager failed to init', error));
+
     let stopDiscoverListener = BleManagerEmitter.addListener(
       'BleManagerDiscoverPeripheral',
       peripheral => {
-        console.log('Discovered', peripheral.name);
         peripherals.set(peripheral.id, peripheral);
         setDiscoveredDevices(Array.from(peripherals.values()));
       },
@@ -164,6 +107,7 @@ function App(): React.JSX.Element {
       () => {
         setIsScanning(false);
         console.log('scan stopped');
+        console.log('discovered devices: ', discoveredDevices);
       },
     );
 
@@ -187,17 +131,13 @@ function App(): React.JSX.Element {
       });
     }
     return () => {
+      console.log("App's cleanup function called.");
       stopDiscoverListener.remove();
       stopConnectListener.remove();
       stopScanListener.remove();
       disconnectListener.remove();
     };
   }, []);
-
-  // useEffect(() => {
-  //   console.log('connected devices: ', connectedDevices);
-  //   console.log('peripherals: ', peripherals.toString());
-  // });
 
   const startScan = (serviceUUIDs = [], seconds: number = 5) => {
     if (!isScanning) {
@@ -220,7 +160,10 @@ function App(): React.JSX.Element {
         peripherals.set(peripheral.id, peripheral);
         setConnectedDevices(Array.from(peripherals.values()));
         setDiscoveredDevices(Array.from(peripherals.values()));
-        console.log('Connected to ' + peripheral.name);
+        console.log(
+          'Connected to ' + peripheral.name + '. Now getting services',
+        );
+        getServices(peripheral);
       })
       .catch(error => {
         console.log('Connection error', error);
@@ -266,40 +209,45 @@ function App(): React.JSX.Element {
       });
   };
 
-  const startTempNotifications = (
+  const startCrispNotifications = (
     peripheral,
-    serviceUUID = CRISPINESS_SERVICE_UUID, // THERMOMETER_SERVICE_UUID,
-    charUUID = CURRENT_CRISP_CHAR_UUID, //  TEMP_CHAR_UUID,
+    serviceUUID = CRISPINESS_SERVICE_UUID,
+    charUUID = CURRENT_CRISP_CHAR_UUID,
   ) => {
-    console.log(
-      'start temp notifications: ',
-      peripheral.id,
-      serviceUUID,
-      charUUID,
+    BleManager.startNotification(peripheral.id, serviceUUID, charUUID)
+      .then(() => {
+        console.log('Started notifications on ' + peripheral.id);
+        // readCharacteristic(peripheral);
+        // readCurrentCrispinessCharacteristic(peripheral);
+        BleManagerEmitter.addListener(
+          BleEventType.BleManagerDidUpdateValueForCharacteristic,
+          ({value, peripheral, characteristic, service}) => {
+            const data = bytesToString(value);
+            console.log(
+              `Received ${data} for characteristic ${characteristic}`,
+            );
+            setCurrentCrispiness(data);
+
+            // TODO: get state notifications here too!
+            // on sate = toasting,
+          },
+        );
+      })
+      .catch(error => {
+        console.log('Notification error', error);
+      });
+  };
+
+  const stopCrispNotifications = (
+    peripheral,
+    serviceUUID = CRISPINESS_SERVICE_UUID,
+    charUUID = CURRENT_CRISP_CHAR_UUID,
+  ) => {
+    BleManager.startNotification(peripheral.id, serviceUUID, charUUID).then(
+      () => {
+        console.log('Started notifications on ' + peripheral.id);
+      },
     );
-    writeTargetCrispinessCharacteristic(
-      peripheral,
-      Buffer.from('testing here please').toJSON().data,
-    );
-    // BleManager.startNotification(peripheral.id, serviceUUID, charUUID)
-    //   .then(() => {
-    //     console.log('Started notifications on ' + peripheral.id);
-    //     readCharacteristic(peripheral);
-    //     readCurrentCrispinessCharacteristic(peripheral);
-    //     BleManagerEmitter.addListener(
-    //       BleEventType.BleManagerDidUpdateValueForCharacteristic,
-    //       ({value, peripheral, characteristic, service}) => {
-    //         const data = bytesToString(value);
-    //         console.log(
-    //           `Received ${data} for characteristic ${characteristic}`,
-    //         );
-    //         setCurrentCrispiness(data);
-    //       },
-    //     );
-    //   })
-    //   .catch(error => {
-    //     console.log('Notification error', error);
-    //   });
   };
 
   // ble commands
@@ -340,11 +288,15 @@ function App(): React.JSX.Element {
     serviceUUID: String = CRISPINESS_SERVICE_UUID,
     charUUID: String = TARGET_CRISP_CHAR_UUID,
   ) => {
+    console.log('Connected Devices: ', connectedDevices);
+
+    // TODO: format this data properly
     const data2 = stringToBytes('pray');
     // var f_arr = new Float32Array(1);
     // f_arr[0] = data[0];
     // const buffer = Buffer.from(data);
     console.log('trying to write to: ', peripheral.id, ' with: ', data2);
+
     BleManager.write(
       peripheral.id,
       serviceUUID,
@@ -352,41 +304,27 @@ function App(): React.JSX.Element {
       stringToBytes('pray'),
     )
       .then(() => {
-        console.log('current Crispiness: ' + bytesToString(data));
+        console.log('Sent Target Crispiness: ' + bytesToString(data2));
       })
       .catch(error => {
         console.log('Write error', error);
       });
   };
 
-  // without response
-  const writeTargetCrispinessCharacteristic_test = (
-    peripheral, // Temp
-    data,
-    serviceUUID: string = CRISPINESS_SERVICE_UUID,
-    charUUID: string = TARGET_CRISP_CHAR_UUID,
+  const writeCancelCharacteristic = (
+    peripheral = {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'}, // Temp
+    data = 'cancel',
+    serviceUUID: String = TIMER_SERVICE_UUID,
+    charUUID: String = CANCEL_CHAR_UUID,
   ) => {
-    // var f_arr = new Float32Array(1);
-    // f_arr[0] = data[0];
-    // const buffer = Buffer.from(data);
-    console.log(
-      'trying to write to: ',
-      peripheral.id,
-      ' with: ',
-      Buffer.from('please').toJSON().data,
-    );
-    BleManager.writeWithoutResponse(
+    BleManager.write(
       peripheral.id,
       serviceUUID,
       charUUID,
-      stringToBytes('pray'),
+      stringToBytes('cancel'),
     )
       .then(() => {
-        console.log(
-          'write success',
-          // 'current Crispiness: ' +
-          //   bytesToString(Buffer.from('testing here please').toJSON().data),
-        );
+        console.log('Sent Stop Command');
       })
       .catch(error => {
         console.log('Write error', error);
@@ -395,9 +333,50 @@ function App(): React.JSX.Element {
 
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
 
+  // Ble Context
+  const appContexInitialState = {
+    currentCrispiness: 0,
+    connectedDevices: [],
+    discoveredDevices: [],
+  };
+  const [bleData, setBleData] = useState(appContexInitialState);
+  const updateCurrentCrispiness = currentCrispiness => {
+    const newState = {...bleData, currentCrispiness};
+    setBleData(newState);
+  };
+  const updateConnectedDevices = connectedDevices => {
+    const newState = {...bleData, connectedDevices};
+    setBleData(newState);
+  };
+  const updateDiscoveredDevices = discoveredDevices => {
+    const newState = {...bleData, discoveredDevices};
+    setBleData(newState);
+  };
+  const contextSetters = {
+    updateCurrentCrispiness,
+    updateConnectedDevices,
+    updateDiscoveredDevices,
+  };
+
+  const bleFunctions = {
+    writeTargetCrispinessCharacteristic,
+    startCrispNotifications,
+    stopCrispNotifications,
+    writeCancelCharacteristic,
+    startScan,
+    connectToDevice,
+    disconnectFromPeripheral,
+  };
+
   return (
     <>
-      <AppContext.Provider value={currentCrispiness}>
+      <AppContext.Provider
+        value={{
+          ...bleData,
+          ...contextSetters,
+          ...bleFunctions,
+          setSettingsModalVisible,
+        }}>
         <NavigationContainer>
           <Stack.Navigator
             initialRouteName="Selection"
@@ -405,23 +384,15 @@ function App(): React.JSX.Element {
               headerShown: false,
             }}>
             <Stack.Group>
-              <Stack.Screen
-                name="Selection"
-                component={ToastSelectionScreen}
-                initialParams={{
-                  setSettingsModalVisible: setSettingsModalVisible,
-                  writeTargetCrispinessCharacteristic:
-                    writeTargetCrispinessCharacteristic,
-                }}
-              />
+              <Stack.Screen name="Selection" component={ToastSelectionScreen} />
               <Stack.Screen name="Toasting" component={TimeRemainingScreen} />
             </Stack.Group>
-            {/* <Stack.Group screenOptions={{presentation: 'modal'}}>
-            <Stack.Screen name="SettingsModal" component={SettingsModal} />
-          </Stack.Group> */}
           </Stack.Navigator>
         </NavigationContainer>
-        <Modal visible={settingsModalVisible} presentationStyle="pageSheet">
+        <Modal
+          visible={settingsModalVisible}
+          presentationStyle="pageSheet"
+          animationType="slide">
           <SettingsModal
             setSettingsModalVisible={setSettingsModalVisible}
             startScan={startScan}
@@ -429,9 +400,7 @@ function App(): React.JSX.Element {
             discoveredDevices={discoveredDevices}
             connectedDevices={connectedDevices}
             connectToPeripheral={connectToDevice}
-            getServices={getServices}
             disconnectFromPeripheral={disconnectFromPeripheral}
-            startNotification={startTempNotifications}
           />
         </Modal>
       </AppContext.Provider>
@@ -440,215 +409,5 @@ function App(): React.JSX.Element {
 }
 
 const Stack = createNativeStackNavigator();
-
-const TimeRemainingScreen = ({navigation}) => {
-  const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
-  const currentCrispiness = useContext(AppContext);
-
-  function formatTime(duration_sec: Number) {
-    // Hours, minutes and seconds
-    const hrs = Math.floor(duration_sec / 3600);
-    const mins = Math.floor((duration_sec % 3600) / 60);
-    const secs = Math.floor(duration_sec % 60);
-
-    // Output like "1:01" or "4:03:59" or "123:03:59"
-    let ret = '';
-
-    if (hrs > 0) {
-      ret += '' + hrs + ':' + (mins < 10 ? '0' : '');
-    }
-    ret += '' + mins + ':' + (secs < 10 ? '0' : '');
-    ret += '' + secs;
-    return ret;
-  }
-
-  useEffect(() => {
-    // const interval = setInterval(() => {
-    //   setTimeRemaining(timeRemaining_sec - 1);
-    // }, 1000);
-
-    if (timeRemaining_sec > 0) {
-      setTimeout(() => {
-        setTimeRemaining(timeRemaining_sec - 1);
-      }, 1000);
-    } else {
-      Alert.alert('Toast Ready!', '', [
-        {text: 'Restart Timer', onPress: () => setTimeRemaining(999)},
-      ]);
-    }
-    // return () => clearInterval(interval);
-  }, [timeRemaining_sec]);
-
-  return (
-    <>
-      <SafeAreaView
-        edges={['top']}
-        style={{flex: 0, backgroundColor: styles.header.backgroundColor}}
-      />
-      <SafeAreaView
-        style={{
-          backgroundColor: false ? Colors.darker : Colors.lighter,
-          flex: 1,
-        }}>
-        <View style={{flex: 1}}>
-          <ToastEHeader />
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text style={{fontSize: 20}}>
-              Current Cripiness: {currentCrispiness}
-            </Text>
-            <Text style={{fontSize: 20}}>Time Remaining</Text>
-            <Text style={{fontSize: 60}}>{formatTime(timeRemaining_sec)}</Text>
-          </View>
-          <Button
-            title="Selection"
-            onPress={() => navigation.navigate('Selection')}
-          />
-        </View>
-      </SafeAreaView>
-    </>
-  );
-};
-
-const ToastSelectionScreen = ({route, navigation}) => {
-  const [toastTarget, setToastTarget] = useState(0);
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const {setSettingsModalVisible, writeTargetCrispinessCharacteristic} =
-    route.params;
-
-  // useEffect(() => {
-  //   console.log('toastTarget: ', toastTarget);
-  //   writeTargetCrispinessCharacteristic([toastTarget]);
-  // }, [toastTarget]);
-
-  return (
-    <>
-      <SafeAreaView
-        edges={['top']}
-        style={{flex: 0, backgroundColor: styles.header.backgroundColor}}
-      />
-      <SafeAreaView
-        style={{
-          backgroundColor: false ? Colors.darker : Colors.lighter,
-          flex: 1,
-        }}>
-        {/* <StatusBar
-          barStyle={true ? 'light-content' : 'dark-content'}
-          backgroundColor={styles.header.backgroundColor}
-        /> */}
-        <View style={{flex: 1}}>
-          <ToastEHeader
-            navigation={navigation}
-            setSettingsModalVisible={setSettingsModalVisible}
-          />
-          <CrispinessSelector
-            target={toastTarget}
-            setTarget={setToastTarget}
-            navigation={navigation}
-            writeTargetCrispinessCharacteristic={
-              writeTargetCrispinessCharacteristic
-            }
-          />
-          {/* <Button
-            title="Confirm"
-            onPress={() => navigation.navigate('Toasting')}
-          /> */}
-        </View>
-      </SafeAreaView>
-    </>
-  );
-};
-
-const SettingsModal = ({
-  setSettingsModalVisible,
-  startScan,
-  isScanning,
-  discoveredDevices,
-  connectedDevices,
-  connectToPeripheral,
-  getServices,
-  disconnectFromPeripheral,
-  startNotification,
-}) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  // const {
-  //   startScan,
-  //   isScanning,
-  //   discoveredDevices,
-  //   connectedDevices,
-  //   connectToPeripheral,
-  //   disconnectFromPeripheral,
-  // } = route.params;
-
-  return (
-    <View style={{paddingHorizontal: 20}}>
-      <Button title="X" onPress={() => setSettingsModalVisible(false)} />
-      <Text style={[styles.title, {color: Colors.black}]}>
-        React Native BLE
-      </Text>
-      <TouchableOpacity
-        activeOpacity={0.5}
-        style={styles.scanButton}
-        onPress={startScan}>
-        <Text style={styles.scanButtonText}>
-          {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        activeOpacity={0.5}
-        style={styles.scanButton}
-        onPress={() =>
-          startScan(['00000001-710e-4a5b-8d75-3e5b444bc3cf', '180a'], 4)
-        }>
-        <Text style={styles.scanButtonText}>
-          {isScanning ? 'Scanning...' : 'Scan Raspberry Pi Only'}
-        </Text>
-      </TouchableOpacity>
-      <Text style={[styles.subtitle, {color: Colors.black}]}>
-        Discovered Devices ({discoveredDevices.length}):
-      </Text>
-      {discoveredDevices.length > 0 ? (
-        <FlatList
-          data={discoveredDevices}
-          renderItem={({item}) => (
-            <DeviceList
-              peripheral={item}
-              connect={connectToPeripheral}
-              disconnect={disconnectFromPeripheral}
-            />
-          )}
-          keyExtractor={item => item.id}
-        />
-      ) : (
-        <Text style={styles.noDevicesText}>No Bluetooth devices found</Text>
-      )}
-      <Text
-        style={[
-          styles.subtitle,
-          {color: isDarkMode ? Colors.white : Colors.black},
-        ]}>
-        Connected Devices:
-      </Text>
-      {connectedDevices.length > 0 ? (
-        <FlatList
-          data={connectedDevices}
-          renderItem={({item}) => (
-            <DeviceList
-              peripheral={item}
-              connect={connectToPeripheral}
-              disconnect={disconnectFromPeripheral}
-              getServices={getServices}
-              startNotification={startNotification}
-            />
-          )}
-          keyExtractor={item => item.id}
-        />
-      ) : (
-        <Text style={styles.noDevicesText}>No connected devices</Text>
-      )}
-    </View>
-  );
-};
 
 export default App;

@@ -5,7 +5,7 @@ import Carousel from 'react-native-reanimated-carousel';
 
 import {styles} from '../styles';
 
-export const ToastPreviewCarousel = ({setTarget}) => {
+export const ToastPreviewCarousel = ({target, setTarget}) => {
   const width = Dimensions.get('window').width;
 
   const images = [
@@ -34,14 +34,11 @@ export const ToastPreviewCarousel = ({setTarget}) => {
         scrollAnimationDuration={1000}
         onProgressChange={(_a, absoluteProgress) => {
           let input = absoluteProgress / (images.length - 1);
+          // console.log('input:', input);
           setTarget(input);
-          console.log('input:', input);
         }}
         pagingEnabled={false}
         snapEnabled={false}
-        // onSnapToItem={index => {
-        //   console.log('Toast Target:', index);
-        // }}
         renderItem={({index}) => (
           <View
             style={{
