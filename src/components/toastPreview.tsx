@@ -34,8 +34,9 @@ export const ToastPreviewCarousel = ({target, setTarget}) => {
         scrollAnimationDuration={1000}
         onProgressChange={(_a, absoluteProgress) => {
           let input = absoluteProgress / (images.length - 1);
-          // console.log('input:', input);
-          setTarget(input);
+          const newTarget = Math.round(input * 100);
+          // console.log('input:', newTarget);
+          if (newTarget !== target) setTarget(newTarget);
         }}
         pagingEnabled={false}
         snapEnabled={false}

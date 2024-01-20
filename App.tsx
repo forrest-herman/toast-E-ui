@@ -27,6 +27,8 @@ import {
   CANCEL_CHAR_UUID,
 } from './src/actions/bleActions';
 
+import {toByteArray} from './src/utils/helperFunctions';
+
 // screens
 import ToastSelectionScreen from './src/screens/ToastSelectionScreen.tsx';
 import TimeRemainingScreen from './src/screens/TimeRemainingScreen.tsx';
@@ -40,13 +42,9 @@ const BleManagerModule = NativeModules.BleManager;
 const BleManagerEmitter = new NativeEventEmitter(BleManagerModule);
 
 function App(): React.JSX.Element {
-  const [currentCrispiness, setCurrentCrispiness] = useState(0);
-
   // ble
   const peripherals = new Map();
   const [isScanning, setIsScanning] = useState(false);
-  const [connectedDevices, setConnectedDevices] = useState([]);
-  const [discoveredDevices, setDiscoveredDevices] = useState([]);
 
   const handleGetConnectedDevices = () => {
     if (Platform.OS === 'android') {
@@ -58,8 +56,7 @@ function App(): React.JSX.Element {
           setConnectedDevices(Array.from(peripherals.values()));
         }
       });
-    } //else setConnectedDevices([]);
-    console.log('connected devices: ', connectedDevices); // TODO: test this, can persist over reload?
+    } else setConnectedDevices([]);
   };
 
   useEffect(() => {
@@ -79,14 +76,15 @@ function App(): React.JSX.Element {
       })
       .catch(error => console.log('BleManager failed to init', error));
 
-    let stopDiscoverListener = BleManagerEmitter.addListener(
+    let discoverBleListener = BleManagerEmitter.addListener(
       'BleManagerDiscoverPeripheral',
       peripheral => {
         peripherals.set(peripheral.id, peripheral);
+        console.log('Discovered', peripheral.id);
         setDiscoveredDevices(Array.from(peripherals.values()));
       },
     );
-    let disconnectListener = BleManagerEmitter.addListener(
+    let disconnectBleListener = BleManagerEmitter.addListener(
       'BleManagerDisconnectPeripheral',
       ({peripheral}) => {
         console.log('Disconnected from ' + peripheral);
@@ -96,18 +94,18 @@ function App(): React.JSX.Element {
         setConnectedDevices(Array.from(peripherals.values()));
       },
     );
-    let stopConnectListener = BleManagerEmitter.addListener(
+    let connectBleListener = BleManagerEmitter.addListener(
       'BleManagerConnectPeripheral',
       peripheral => {
         console.log('BleManagerConnectPeripheral:', peripheral);
       },
     );
-    let stopScanListener = BleManagerEmitter.addListener(
+    let stopBleScanListener = BleManagerEmitter.addListener(
       'BleManagerStopScan',
       () => {
         setIsScanning(false);
+        console.log('discovered peripherals: ', peripherals);
         console.log('scan stopped');
-        console.log('discovered devices: ', discoveredDevices);
       },
     );
 
@@ -132,14 +130,14 @@ function App(): React.JSX.Element {
     }
     return () => {
       console.log("App's cleanup function called.");
-      stopDiscoverListener.remove();
-      stopConnectListener.remove();
-      stopScanListener.remove();
-      disconnectListener.remove();
+      discoverBleListener.remove();
+      connectBleListener.remove();
+      stopBleScanListener.remove();
+      disconnectBleListener.remove();
     };
   }, []);
 
-  const startScan = (serviceUUIDs = [], seconds: number = 5) => {
+  const startScan = (serviceUUIDs = [], seconds: number = 3) => {
     if (!isScanning) {
       BleManager.scan(serviceUUIDs.toString(), seconds, true)
         .then(() => {
@@ -158,8 +156,12 @@ function App(): React.JSX.Element {
       .then(() => {
         peripheral.connected = true;
         peripherals.set(peripheral.id, peripheral);
+        console.log(
+          'connected peripherals: ',
+          Array.from(peripherals.values()),
+        );
         setConnectedDevices(Array.from(peripherals.values()));
-        setDiscoveredDevices(Array.from(peripherals.values()));
+        // setDiscoveredDevices(Array.from(peripherals.values()));
         console.log(
           'Connected to ' + peripheral.name + '. Now getting services',
         );
@@ -180,20 +182,6 @@ function App(): React.JSX.Element {
       .catch(error => console.log('error retrieving services', error));
   };
 
-  // pair with device first before connecting to it ANDROID ONLY
-  const connectToPeripheral = peripheral => {
-    BleManager.createBond(peripheral.id)
-      .then(() => {
-        peripheral.connected = true;
-        peripherals.set(peripheral.id, peripheral);
-        setConnectedDevices(Array.from(peripherals.values()));
-        setDiscoveredDevices(Array.from(peripherals.values()));
-        console.log('BLE device paired successfully');
-      })
-      .catch(() => {
-        console.log('failed to bond');
-      });
-  };
   // disconnect from device
   const disconnectFromPeripheral = peripheral => {
     BleManager.disconnect(peripheral.id)
@@ -243,9 +231,9 @@ function App(): React.JSX.Element {
     serviceUUID = CRISPINESS_SERVICE_UUID,
     charUUID = CURRENT_CRISP_CHAR_UUID,
   ) => {
-    BleManager.startNotification(peripheral.id, serviceUUID, charUUID).then(
+    BleManager.stopNotification(peripheral.id, serviceUUID, charUUID).then(
       () => {
-        console.log('Started notifications on ' + peripheral.id);
+        console.log('Stopped notifications on ' + peripheral.id);
       },
     );
   };
@@ -288,23 +276,18 @@ function App(): React.JSX.Element {
     serviceUUID: String = CRISPINESS_SERVICE_UUID,
     charUUID: String = TARGET_CRISP_CHAR_UUID,
   ) => {
-    console.log('Connected Devices: ', connectedDevices);
-
-    // TODO: format this data properly
-    const data2 = stringToBytes('pray');
-    // var f_arr = new Float32Array(1);
-    // f_arr[0] = data[0];
-    // const buffer = Buffer.from(data);
-    console.log('trying to write to: ', peripheral.id, ' with: ', data2);
-
-    BleManager.write(
+    console.log(
+      'trying to write to: ',
       peripheral.id,
-      serviceUUID,
-      charUUID,
-      stringToBytes('pray'),
-    )
+      ' with: ',
+      data,
+      ' as:  ',
+      toByteArray(data),
+    );
+
+    BleManager.write(peripheral.id, serviceUUID, charUUID, toByteArray(data))
       .then(() => {
-        console.log('Sent Target Crispiness: ' + bytesToString(data2));
+        console.log('Sent Target Crispiness');
       })
       .catch(error => {
         console.log('Write error', error);
@@ -340,22 +323,24 @@ function App(): React.JSX.Element {
     discoveredDevices: [],
   };
   const [bleData, setBleData] = useState(appContexInitialState);
-  const updateCurrentCrispiness = currentCrispiness => {
+  const setCurrentCrispiness = currentCrispiness => {
     const newState = {...bleData, currentCrispiness};
     setBleData(newState);
   };
-  const updateConnectedDevices = connectedDevices => {
+  const setConnectedDevices = connectedDevices => {
+    console.log('set connected devices', connectedDevices);
     const newState = {...bleData, connectedDevices};
     setBleData(newState);
   };
-  const updateDiscoveredDevices = discoveredDevices => {
+  const setDiscoveredDevices = discoveredDevices => {
+    console.log('set discovered devices', discoveredDevices);
     const newState = {...bleData, discoveredDevices};
     setBleData(newState);
   };
   const contextSetters = {
-    updateCurrentCrispiness,
-    updateConnectedDevices,
-    updateDiscoveredDevices,
+    setCurrentCrispiness,
+    setConnectedDevices,
+    setDiscoveredDevices,
   };
 
   const bleFunctions = {
@@ -367,6 +352,12 @@ function App(): React.JSX.Element {
     connectToDevice,
     disconnectFromPeripheral,
   };
+
+  // Temp
+  useEffect(() => {
+    console.log('discoveredDevices (useEffect): ', bleData.discoveredDevices);
+    console.log('connected Devices (useEffect): ', bleData.connectedDevices);
+  }, [bleData.connectedDevices, bleData.discoveredDevices]);
 
   return (
     <>
@@ -397,8 +388,8 @@ function App(): React.JSX.Element {
             setSettingsModalVisible={setSettingsModalVisible}
             startScan={startScan}
             isScanning={isScanning}
-            discoveredDevices={discoveredDevices}
-            connectedDevices={connectedDevices}
+            discoveredDevices={bleData.discoveredDevices}
+            connectedDevices={bleData.connectedDevices}
             connectToPeripheral={connectToDevice}
             disconnectFromPeripheral={disconnectFromPeripheral}
           />

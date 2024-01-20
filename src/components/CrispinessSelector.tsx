@@ -16,7 +16,7 @@ export const CrispinessSelector = ({
   // const height = Dimensions.get('window').width;
   const [recentUpdates, setRecentUpdates] = useState([2, 2, 2, 2]);
 
-  const darkenFactor = 1 + target;
+  const darkenFactor = 1 + target / 100;
   const [red, green, blue] = [156, 81, 37];
   // const [red, green, blue] = [255, 233, 219];
   const [r, g, b] = [
@@ -32,20 +32,16 @@ export const CrispinessSelector = ({
   };
 
   const confirmCrispiness = () => {
-    stopNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+    // stopNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
 
     // TODO: figure out how to use peripheral id automatically
     writeTargetCrispinessCharacteristic(
       {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
       [target],
     );
-    // TODO: test this
-    writeTargetCrispinessCharacteristic(
-      {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
-      Buffer.from('testing here please').toJSON().data,
-    );
+    // TODO: add await.then() to this
 
-    startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+    // startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
   return (
@@ -84,7 +80,7 @@ export const CrispinessSelector = ({
               margin: 10,
             }}>
             <Text style={{color: '#F3F3F3', fontSize: 70, textAlign: 'center'}}>
-              {Math.round(target * 100)}
+              {target}
             </Text>
           </View>
         </TouchableOpacity>

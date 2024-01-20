@@ -52,7 +52,9 @@ const TimeRemainingScreen = ({navigation}) => {
             <Text style={{fontSize: 20}}>
               Current Cripiness: {currentCrispiness}
             </Text>
-            <Text style={{fontSize: 25}}>Time Remaining</Text>
+            <Text style={{fontSize: 25, textAlign: 'center'}}>
+              Estimated {'\n'}Time Remaining
+            </Text>
             <Text style={{fontSize: 70}}>{formatTime(timeRemaining_sec)}</Text>
           </View>
           <View style={{alignItems: 'center'}}>
