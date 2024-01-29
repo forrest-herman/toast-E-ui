@@ -1,5 +1,11 @@
 import React, {useEffect, useState} from 'react';
-import {Dimensions, Text, TouchableOpacity, View} from 'react-native';
+import {
+  Dimensions,
+  Text,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
+} from 'react-native';
 import {Buffer} from 'buffer';
 
 import {ToastPreviewCarousel} from './toastPreview';
@@ -66,7 +72,7 @@ export const CrispinessSelector = ({
       </View>
       <ToastPreviewCarousel target={target} setTarget={setTarget} />
       <View style={{alignItems: 'center'}}>
-        <TouchableOpacity
+        <TouchableWithoutFeedback
           onPress={confirmCrispiness}
           onLongPress={toastingBegins}>
           <View
@@ -83,7 +89,7 @@ export const CrispinessSelector = ({
               {target}
             </Text>
           </View>
-        </TouchableOpacity>
+        </TouchableWithoutFeedback>
         <Text style={{color: 'brown', fontSize: 20, textAlign: 'center'}}>
           Desired Crispiness
         </Text>

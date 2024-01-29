@@ -33,6 +33,7 @@
 		A88114E92B5B15E3003CA891 /* SimpleLineIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A88114D62B5B15E2003CA891 /* SimpleLineIcons.ttf */; };
 		A88114EA2B5B15E3003CA891 /* FontAwesome6_Brands.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A88114D72B5B15E2003CA891 /* FontAwesome6_Brands.ttf */; };
 		A88114EB2B5B15E3003CA891 /* MaterialIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A88114D82B5B15E2003CA891 /* MaterialIcons.ttf */; };
+		A88114ED2B5E2C1E003CA891 /* toast_ready_alert.wav in Resources */ = {isa = PBXBuildFile; fileRef = A88114EC2B5E2C1E003CA891 /* toast_ready_alert.wav */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -81,6 +82,7 @@
 		A88114D62B5B15E2003CA891 /* SimpleLineIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = SimpleLineIcons.ttf; sourceTree = "<group>"; };
 		A88114D72B5B15E2003CA891 /* FontAwesome6_Brands.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = FontAwesome6_Brands.ttf; sourceTree = "<group>"; };
 		A88114D82B5B15E2003CA891 /* MaterialIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = MaterialIcons.ttf; sourceTree = "<group>"; };
+		A88114EC2B5E2C1E003CA891 /* toast_ready_alert.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = toast_ready_alert.wav; path = "../../../../Library/Mobile Documents/com~apple~CloudDocs/toast_ready_alert.wav"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -124,6 +126,7 @@
 		13B07FAE1A68108700A75B9A /* ToastE_UI */ = {
 			isa = PBXGroup;
 			children = (
+				A88114EC2B5E2C1E003CA891 /* toast_ready_alert.wav */,
 				A88114C52B5B15E2003CA891 /* Fonts */,
 				13B07FAF1A68108700A75B9A /* AppDelegate.h */,
 				13B07FB01A68108700A75B9A /* AppDelegate.mm */,
@@ -320,6 +323,7 @@
 				A88114EA2B5B15E3003CA891 /* FontAwesome6_Brands.ttf in Resources */,
 				A88114DB2B5B15E3003CA891 /* Feather.ttf in Resources */,
 				A88114E92B5B15E3003CA891 /* SimpleLineIcons.ttf in Resources */,
+				A88114ED2B5E2C1E003CA891 /* toast_ready_alert.wav in Resources */,
 				A88114E72B5B15E3003CA891 /* EvilIcons.ttf in Resources */,
 				A88114DA2B5B15E3003CA891 /* Octicons.ttf in Resources */,
 				A88114E52B5B15E3003CA891 /* FontAwesome.ttf in Resources */,
@@ -669,7 +673,10 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -737,7 +744,10 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

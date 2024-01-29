@@ -7,8 +7,22 @@ import {ToastEHeader} from '../components/Header.tsx';
 import {formatTime} from '../utils/helperFunctions';
 import {styles} from '../styles/styles';
 
+const STATUS = {
+  TOASTING: 0,
+  CANCELLED: 1,
+  READY: 2,
+};
+
+// Import the react-native-sound module
+var Sound = require('react-native-sound');
+var whoosh;
+
+// Enable playback in silence mode
+Sound.setCategory('Playback');
+
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
+  const [toastingStatus, setToastingStatus] = useState(STATUS.TOASTING);
 
   const {currentCrispiness, writeCancelCharacteristic} = useContext(AppContext);
 
@@ -18,20 +32,45 @@ const TimeRemainingScreen = ({navigation}) => {
   };
 
   useEffect(() => {
-    // const interval = setInterval(() => {
-    //   setTimeRemaining(timeRemaining_sec - 1);
-    // }, 1000);
+    // Load the sound file 'whoosh.mp3' from the app bundle
+    // See notes below about preloading sounds within initialization code below.
+    whoosh = new Sound('toast_ready_alert.wav', Sound.MAIN_BUNDLE, error => {
+      if (error) {
+        console.log('failed to load the sound', error);
+        return;
+      }
+      // loaded successfully
+      console.log(
+        'duration in seconds: ' +
+          whoosh.getDuration() +
+          'number of channels: ' +
+          whoosh.getNumberOfChannels(),
+      );
+    });
+    return () => {
+      whoosh.release(); // Release the audio player resource
+    };
+  }, []);
 
+  useEffect(() => {
     if (timeRemaining_sec > 0) {
       setTimeout(() => {
         setTimeRemaining(timeRemaining_sec - 1);
       }, 1000);
     } else {
-      Alert.alert('Toast Ready!', '', [
-        {text: 'Restart Timer', onPress: () => setTimeRemaining(999)},
-      ]);
+      setToastingStatus(STATUS.READY);
+      // Play the sound with an onEnd callback
+      whoosh.play(success => {
+        if (success) {
+          console.log('successfully finished playing');
+        } else {
+          console.log('playback failed due to audio decoding errors');
+        }
+      });
+      //   Alert.alert('Toast Ready!', '', [
+      //     {text: 'Restart Timer', onPress: () => setTimeRemaining(999)},
+      //   ]);
     }
-    // return () => clearInterval(interval);
   }, [timeRemaining_sec]);
 
   return (
@@ -49,13 +88,28 @@ const TimeRemainingScreen = ({navigation}) => {
           <ToastEHeader />
           <View
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text style={{fontSize: 20}}>
+            {/* <Text style={{fontSize: 20, paddingVertical: 40}}>
               Current Cripiness: {currentCrispiness}
-            </Text>
-            <Text style={{fontSize: 25, textAlign: 'center'}}>
-              Estimated {'\n'}Time Remaining
-            </Text>
-            <Text style={{fontSize: 70}}>{formatTime(timeRemaining_sec)}</Text>
+            </Text> */}
+            {toastingStatus === STATUS.TOASTING ? (
+              <>
+                <Text style={{fontSize: 25, textAlign: 'center'}}>
+                  Estimated {'\n'}Time Remaining
+                </Text>
+                <Text style={{fontSize: 70}}>
+                  {formatTime(timeRemaining_sec)}
+                </Text>
+              </>
+            ) : (
+              <Text
+                style={{
+                  fontSize: 50,
+                  paddingVertical: 40,
+                  textAlign: 'center',
+                }}>
+                Toasting Complete!
+              </Text>
+            )}
           </View>
           <View style={{alignItems: 'center'}}>
             <TouchableOpacity onPress={cancelToasting}>
@@ -71,7 +125,7 @@ const TimeRemainingScreen = ({navigation}) => {
                 }}>
                 <Text
                   style={{color: '#F3F3F3', fontSize: 35, textAlign: 'center'}}>
-                  Cancel
+                  {toastingStatus === STATUS.TOASTING ? 'Cancel' : 'Reset'}
                 </Text>
               </View>
             </TouchableOpacity>
