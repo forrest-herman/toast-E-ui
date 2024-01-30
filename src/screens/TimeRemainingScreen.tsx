@@ -24,11 +24,13 @@ const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
   const [toastingStatus, setToastingStatus] = useState(STATUS.TOASTING);
 
-  const {currentCrispiness, writeCancelCharacteristic} = useContext(AppContext);
+  const {currentCrispiness, writeCancelCharacteristic, stopCrispNotifications} =
+    useContext(AppContext);
 
   const cancelToasting = () => {
     navigation.navigate('Selection');
     writeCancelCharacteristic();
+    stopCrispNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
   useEffect(() => {

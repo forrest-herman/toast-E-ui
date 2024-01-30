@@ -137,7 +137,7 @@ function App(): React.JSX.Element {
     };
   }, []);
 
-  const startScan = (serviceUUIDs = [], seconds: number = 3) => {
+  const startScan = (serviceUUIDs = [], seconds: number = 4) => {
     if (!isScanning) {
       BleManager.scan(serviceUUIDs.toString(), seconds, true)
         .then(() => {
@@ -308,6 +308,7 @@ function App(): React.JSX.Element {
     )
       .then(() => {
         console.log('Sent Stop Command');
+        stopCrispNotifications(peripheral.id);
       })
       .catch(error => {
         console.log('Write error', error);

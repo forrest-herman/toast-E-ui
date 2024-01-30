@@ -47,7 +47,7 @@ export const CrispinessSelector = ({
     );
     // TODO: add await.then() to this
 
-    // startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+    startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
   return (
