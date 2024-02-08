@@ -32,8 +32,8 @@ const TimeRemainingScreen = ({navigation}) => {
   const cancelResetBtnFunc = () => {
     navigation.navigate('Selection');
     stopToasterNotifications();
-    // if (toasterState.controller_state === STATUS.TOASTING)
-    writeCancelCharacteristic();
+    if (toasterState.controller_state === STATUS.TOASTING)
+      writeCancelCharacteristic();
   };
 
   useEffect(() => {
