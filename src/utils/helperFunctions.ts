@@ -32,3 +32,19 @@ export function toBase64(input) {
 export function toByteArray(input) {
   return Buffer.from(input).toJSON().data;
 }
+
+/**
+ * Convert integer to byte array
+ * @param value integer value
+ * @param count byte length
+ * @returns byte array
+ */
+export function getIntBytes(value, count) {
+  var bytes = [];
+
+  for (let i = 0; i < count; i++) {
+    bytes[i] = value & (255);
+    value = value >> 8
+  }
+  return bytes
+}

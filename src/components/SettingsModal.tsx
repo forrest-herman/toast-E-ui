@@ -5,9 +5,13 @@ import {DeviceList} from './DeviceList';
 
 import {styles} from '../styles/styles';
 
+// TODO: temp
+const TOAST_E_SERVICE_UUID = '00000023-710e-4a5b-8d75-3e5b444bc3cf';
+
 const SettingsModal = ({
   setSettingsModalVisible,
   startScan,
+  stopScan,
   isScanning,
   discoveredDevices,
   connectedDevices,
@@ -45,9 +49,7 @@ const SettingsModal = ({
       <TouchableOpacity
         activeOpacity={0.5}
         style={styles.scanButton}
-        onPress={() =>
-          startScan(['00000001-710e-4a5b-8d75-3e5b444bc3cf', '180a'], 4)
-        }>
+        onPress={() => startScan([TOAST_E_SERVICE_UUID], 4)}>
         <Text style={styles.scanButtonText}>
           {isScanning ? 'Scanning...' : 'Scan Raspberry Pi Only'}
         </Text>
@@ -64,6 +66,7 @@ const SettingsModal = ({
               peripheral={item}
               connect={connectToPeripheral}
               disconnect={disconnectFromPeripheral}
+              stopScan={stopScan}
             />
           )}
           keyExtractor={item => item.id}
@@ -82,6 +85,7 @@ const SettingsModal = ({
               peripheral={item}
               connect={connectToPeripheral}
               disconnect={disconnectFromPeripheral}
+              stopScan={stopScan}
             />
           )}
           keyExtractor={item => item.id}

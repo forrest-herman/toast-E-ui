@@ -1,9 +1,8 @@
-import * as React from 'react';
-import {Dimensions, Text, View, Image} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {Dimensions, View, Image} from 'react-native';
 
 import Carousel from 'react-native-reanimated-carousel';
-
-import {styles} from '../styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ToastPreviewCarousel = ({target, setTarget}) => {
   const width = Dimensions.get('window').width;
@@ -17,6 +16,16 @@ export const ToastPreviewCarousel = ({target, setTarget}) => {
     require('../assets/img/toast5.png'),
   ];
 
+  const [initSetting, setInitSetting] = useState(0);
+
+  useEffect(() => {
+    AsyncStorage.getItem('lastUsedCrispiness').then(response => {
+      // TODO: update once new method introduced
+      const targetCrisp = (response * 5) / 100;
+      setInitSetting(targetCrisp);
+    });
+  }, []);
+
   return (
     <View>
       <Carousel
@@ -26,7 +35,7 @@ export const ToastPreviewCarousel = ({target, setTarget}) => {
           parallaxScrollingOffset: 50,
         }}
         loop={false}
-        defaultIndex={0}
+        defaultIndex={initSetting}
         width={width}
         height={width + 20}
         autoPlay={false}

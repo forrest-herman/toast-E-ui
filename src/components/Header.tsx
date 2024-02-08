@@ -1,7 +1,7 @@
 import {View, Text, Button} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-export const ToastEHeader = ({setSettingsModalVisible}) => {
+export const ToastEHeader = ({setSettingsModalVisible = null}) => {
   return (
     <View style={{backgroundColor: 'brown', paddingVertical: 10}}>
       {/* <View style={{flex: 1, justifyContent: 'center'}}> */}
@@ -13,6 +13,7 @@ export const ToastEHeader = ({setSettingsModalVisible}) => {
         }}>
         Toast-E
       </Text>
+      {/* {setSettingsModalVisible ?? ( */}
       <Icon
         name={'cog'}
         size={30}
@@ -22,6 +23,7 @@ export const ToastEHeader = ({setSettingsModalVisible}) => {
           setSettingsModalVisible(true);
         }}
       />
+      {/* )} */}
     </View>
   );
 };

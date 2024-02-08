@@ -10,6 +10,7 @@ import {Buffer} from 'buffer';
 
 import {ToastPreviewCarousel} from './toastPreview';
 import {styles} from '../styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const CrispinessSelector = ({
   target,
@@ -39,12 +40,10 @@ export const CrispinessSelector = ({
 
   const confirmCrispiness = () => {
     // stopNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+    AsyncStorage.setItem('lastUsedCrispiness', target.toString());
 
     // TODO: figure out how to use peripheral id automatically
-    writeTargetCrispinessCharacteristic(
-      {id: '3261042b-e99d-98d6-84ae-2786329fa5a6'},
-      [target],
-    );
+    writeTargetCrispinessCharacteristic((data = target));
     // TODO: add await.then() to this
 
     startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});

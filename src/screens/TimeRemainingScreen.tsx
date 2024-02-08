@@ -8,9 +8,11 @@ import {formatTime} from '../utils/helperFunctions';
 import {styles} from '../styles/styles';
 
 const STATUS = {
-  TOASTING: 0,
-  CANCELLED: 1,
-  READY: 2,
+  IDLE: 'IDLE',
+  CONFIGURED: 'CONFIGURED',
+  TOASTING: 'TOASTING',
+  DONE: 'DONE',
+  CANCELLED: 'CANCELLED',
 };
 
 // Import the react-native-sound module
@@ -22,15 +24,16 @@ Sound.setCategory('Playback');
 
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
-  const [toastingStatus, setToastingStatus] = useState(STATUS.TOASTING);
+  const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
 
-  const {currentCrispiness, writeCancelCharacteristic, stopCrispNotifications} =
+  const {toasterState, writeCancelCharacteristic, stopToasterNotifications} =
     useContext(AppContext);
 
-  const cancelToasting = () => {
+  const cancelResetBtnFunc = () => {
     navigation.navigate('Selection');
+    stopToasterNotifications();
+    // if (toasterState.controller_state === STATUS.TOASTING)
     writeCancelCharacteristic();
-    stopCrispNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
   useEffect(() => {
@@ -55,12 +58,23 @@ const TimeRemainingScreen = ({navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (timeRemaining_sec > 0) {
+    if (
+      Math.abs(toasterState.time_remaining_estimate - timeRemaining_sec) > 3
+    ) {
+      setTimeRemaining(toasterState.time_remaining_estimate);
+    } else if (
+      timeRemaining_sec > 0 &&
+      toasterState.controller_state === STATUS.TOASTING
+    ) {
       setTimeout(() => {
         setTimeRemaining(timeRemaining_sec - 1);
       }, 1000);
-    } else {
-      setToastingStatus(STATUS.READY);
+    }
+  }, [timeRemaining_sec]);
+
+  useEffect(() => {
+    if (toasterState.controller_state === STATUS.DONE) {
+      setToastingStatus(STATUS.DONE); // TODO: redundant
       // Play the sound with an onEnd callback
       whoosh.play(success => {
         if (success) {
@@ -73,7 +87,7 @@ const TimeRemainingScreen = ({navigation}) => {
       //     {text: 'Restart Timer', onPress: () => setTimeRemaining(999)},
       //   ]);
     }
-  }, [timeRemaining_sec]);
+  }, [toasterState.controller_state]);
 
   return (
     <>
@@ -90,19 +104,14 @@ const TimeRemainingScreen = ({navigation}) => {
           <ToastEHeader />
           <View
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            {/* <Text style={{fontSize: 20, paddingVertical: 40}}>
-              Current Cripiness: {currentCrispiness}
-            </Text> */}
-            {toastingStatus === STATUS.TOASTING ? (
-              <>
-                <Text style={{fontSize: 25, textAlign: 'center'}}>
-                  Estimated {'\n'}Time Remaining
-                </Text>
-                <Text style={{fontSize: 70}}>
-                  {formatTime(timeRemaining_sec)}
-                </Text>
-              </>
-            ) : (
+            <Text style={{fontSize: 30, paddingVertical: 10}}>
+              {toasterState.controller_state}
+            </Text>
+            <Text style={{fontSize: 20, paddingVertical: 40}}>
+              Current Cripiness: {toasterState.current_crispiness}
+            </Text>
+
+            {toastingStatus === STATUS.DONE ? (
               <Text
                 style={{
                   fontSize: 50,
@@ -111,10 +120,22 @@ const TimeRemainingScreen = ({navigation}) => {
                 }}>
                 Toasting Complete!
               </Text>
+            ) : (
+              <>
+                <Text style={{fontSize: 25, textAlign: 'center'}}>
+                  Estimated {'\n'}Time Remaining
+                </Text>
+                <Text style={{fontSize: 70}}>
+                  {formatTime(timeRemaining_sec)}
+                </Text>
+              </>
             )}
+            <Text style={{fontSize: 20, paddingVertical: 40}}>
+              Time remaining estimate: {toasterState.time_remaining_estimate}
+            </Text>
           </View>
           <View style={{alignItems: 'center'}}>
-            <TouchableOpacity onPress={cancelToasting}>
+            <TouchableOpacity onPress={cancelResetBtnFunc}>
               <View
                 style={{
                   borderRadius: 65,
@@ -127,7 +148,9 @@ const TimeRemainingScreen = ({navigation}) => {
                 }}>
                 <Text
                   style={{color: '#F3F3F3', fontSize: 35, textAlign: 'center'}}>
-                  {toastingStatus === STATUS.TOASTING ? 'Cancel' : 'Reset'}
+                  {toasterState.controller_state === STATUS.TOASTING
+                    ? 'Cancel'
+                    : 'Reset'}
                 </Text>
               </View>
             </TouchableOpacity>

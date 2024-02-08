@@ -13,8 +13,8 @@ const ToastSelectionScreen = ({navigation}) => {
   const [toastTarget, setToastTarget] = useState(0);
   const {
     setSettingsModalVisible,
-    startCrispNotifications,
-    stopCrispNotifications,
+    startToasterNotifications,
+    stopToasterNotifications,
     writeTargetCrispinessCharacteristic,
   } = useContext(AppContext);
 
@@ -30,10 +30,7 @@ const ToastSelectionScreen = ({navigation}) => {
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader
-            navigation={navigation}
-            setSettingsModalVisible={setSettingsModalVisible}
-          />
+          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
           <CrispinessSelector
             target={toastTarget}
             setTarget={setToastTarget}
@@ -41,8 +38,8 @@ const ToastSelectionScreen = ({navigation}) => {
             writeTargetCrispinessCharacteristic={
               writeTargetCrispinessCharacteristic
             }
-            startNotifications={startCrispNotifications}
-            stopNotifications={stopCrispNotifications}
+            startNotifications={startToasterNotifications}
+            stopNotifications={stopToasterNotifications}
           />
         </View>
       </SafeAreaView>
