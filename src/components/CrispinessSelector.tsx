@@ -1,12 +1,7 @@
 import React, {useEffect, useState} from 'react';
-import {
-  Dimensions,
-  Text,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
-import {Buffer} from 'buffer';
+import {Text, TouchableWithoutFeedback, View} from 'react-native';
+
+import useDebounce from '../hooks/useDebounce';
 
 import {ToastPreviewCarousel} from './toastPreview';
 import {styles} from '../styles';
@@ -16,13 +11,11 @@ export const CrispinessSelector = ({
   target,
   setTarget,
   navigation,
+  toasterState,
   writeTargetCrispinessCharacteristic,
   startNotifications,
   stopNotifications,
 }) => {
-  // const height = Dimensions.get('window').width;
-  const [recentUpdates, setRecentUpdates] = useState([2, 2, 2, 2]);
-
   const darkenFactor = 1 + target / 100;
   const [red, green, blue] = [156, 81, 37];
   // const [red, green, blue] = [255, 233, 219];
@@ -33,21 +26,29 @@ export const CrispinessSelector = ({
   ].map(Math.round);
   const a = 0.4 + target / 5;
 
-  // TODO: move this higher up so that toaster state BLE notification can trigger it.
   const toastingBegins = () => {
     navigation.navigate('Toasting');
   };
 
   const confirmCrispiness = () => {
-    // stopNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
+    console.log('Send:', target);
     AsyncStorage.setItem('lastUsedCrispiness', target.toString());
 
-    // TODO: figure out how to use peripheral id automatically
     writeTargetCrispinessCharacteristic((data = target));
-    // TODO: add await.then() to this
-
+    // TODO: add await.then() to this?
     startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
+
+  const handleSendTarget = useDebounce(confirmCrispiness, 1000);
+
+  useEffect(() => {
+    // new target value
+    handleSendTarget();
+  }, [target]);
+
+  useEffect(() => {
+    if (toasterState.controller_state === 'TOASTING') toastingBegins();
+  }, [toasterState]);
 
   return (
     <View
@@ -71,9 +72,8 @@ export const CrispinessSelector = ({
       </View>
       <ToastPreviewCarousel target={target} setTarget={setTarget} />
       <View style={{alignItems: 'center'}}>
-        <TouchableWithoutFeedback
-          onPress={confirmCrispiness}
-          onLongPress={toastingBegins}>
+        <TouchableWithoutFeedback onPress={toastingBegins}>
+          {/* onLongPress={confirmCrispiness}> */}
           <View
             style={{
               borderRadius: 65,

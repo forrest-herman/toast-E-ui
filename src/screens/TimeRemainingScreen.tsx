@@ -1,5 +1,12 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {SafeAreaView, Text, TouchableOpacity, View, Alert} from 'react-native';
+import {
+  SafeAreaView,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+  StyleSheet,
+} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 import {AppContext} from '../../App';
@@ -25,6 +32,7 @@ Sound.setCategory('Playback');
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
   const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
+  const [percentageRemaining, setPercentageRemaining] = useState(90); // seconds
 
   const {toasterState, writeCancelCharacteristic, stopToasterNotifications} =
     useContext(AppContext);
@@ -32,8 +40,8 @@ const TimeRemainingScreen = ({navigation}) => {
   const cancelResetBtnFunc = () => {
     navigation.navigate('Selection');
     stopToasterNotifications();
-    if (toasterState.controller_state === STATUS.TOASTING)
-      writeCancelCharacteristic();
+    // if (toasterState.controller_state === STATUS.TOASTING) TODO: remove this temp
+    writeCancelCharacteristic();
   };
 
   useEffect(() => {
@@ -56,6 +64,18 @@ const TimeRemainingScreen = ({navigation}) => {
       whoosh.release(); // Release the audio player resource
     };
   }, []);
+
+  useEffect(() => {
+    setPercentageRemaining(
+      Math.round(
+        Math.abs(
+          100 -
+            (toasterState.current_crispiness / toasterState.target_crispiness) *
+              100,
+        ),
+      ),
+    );
+  }, [toasterState.current_crispiness]);
 
   useEffect(() => {
     if (
@@ -131,27 +151,35 @@ const TimeRemainingScreen = ({navigation}) => {
               </>
             )}
             <Text style={{fontSize: 20, paddingVertical: 40}}>
-              Time remaining estimate: {toasterState.time_remaining_estimate}
+              Time remaining estimate: {toasterState.time_remaining_estimate}{' '}
+              {'\n'}
+              Percentage remaining: {percentageRemaining}%
             </Text>
           </View>
           <View style={{alignItems: 'center'}}>
             <TouchableOpacity onPress={cancelResetBtnFunc}>
-              <View
-                style={{
-                  borderRadius: 65,
-                  width: 130,
-                  height: 130,
-                  backgroundColor: 'brown',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  margin: 10,
-                }}>
-                <Text
-                  style={{color: '#F3F3F3', fontSize: 35, textAlign: 'center'}}>
-                  {toasterState.controller_state === STATUS.TOASTING
-                    ? 'Cancel'
-                    : 'Reset'}
-                </Text>
+              <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                <PercentageCircle percentage={percentageRemaining} />
+                <View
+                  style={{
+                    borderRadius: 65,
+                    width: 130,
+                    height: 130,
+                    backgroundColor: 'brown',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                  }}>
+                  <Text
+                    style={{
+                      color: '#F3F3F3',
+                      fontSize: 35,
+                      textAlign: 'center',
+                    }}>
+                    {toasterState.controller_state === STATUS.TOASTING
+                      ? 'Cancel'
+                      : 'Reset'}
+                  </Text>
+                </View>
               </View>
             </TouchableOpacity>
           </View>
@@ -162,3 +190,76 @@ const TimeRemainingScreen = ({navigation}) => {
 };
 
 export default TimeRemainingScreen;
+
+const PercentageCircle = ({percentage}) => {
+  const percent1 = 50;
+  const percent2 = percentage > 50 ? percentage : 50 - percentage;
+
+  function percentToDegrees(percent) {
+    console.log('percent', percent * 3.6);
+    return percent * 3.6;
+  }
+
+  const HalfCircle = ({rotation, mask = false}) => {
+    const rotate = `${rotation}deg`;
+    console.log('rotate', rotate, mask);
+    return (
+      <View
+        style={[
+          styles2.outerCircle,
+          {
+            borderRadius: 75,
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+            width: 75,
+            height: 150,
+            backgroundColor: mask ? Colors.lighter : 'orange',
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'absolute',
+            left: -10,
+            transform: [
+              {translateX: 75 / 2},
+              {rotate: rotate},
+              {translateX: -75 / 2},
+            ],
+          },
+        ]}
+      />
+    );
+  };
+
+  return (
+    <>
+      <HalfCircle rotation={percentToDegrees(percent1)} />
+      <HalfCircle rotation={percentToDegrees(percent2)} mask={percent2 < 50} />
+    </>
+  );
+};
+
+const styles2 = StyleSheet.create({
+  outerCircle: {
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  innerCircle: {
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  leftWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  halfCircle: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
+    backgroundColor: '#f00',
+  },
+});

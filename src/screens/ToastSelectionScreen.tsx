@@ -12,6 +12,7 @@ import {AppContext} from '../../App';
 const ToastSelectionScreen = ({navigation}) => {
   const [toastTarget, setToastTarget] = useState(0);
   const {
+    toasterState,
     setSettingsModalVisible,
     startToasterNotifications,
     stopToasterNotifications,
@@ -35,6 +36,7 @@ const ToastSelectionScreen = ({navigation}) => {
             target={toastTarget}
             setTarget={setToastTarget}
             navigation={navigation}
+            toasterState={toasterState}
             writeTargetCrispinessCharacteristic={
               writeTargetCrispinessCharacteristic
             }
