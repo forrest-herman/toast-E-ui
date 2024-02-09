@@ -96,6 +96,12 @@ function App(): React.JSX.Element {
       prevDeviceId = deviceId;
     });
 
+    if (isSimulator) {
+      return () => {
+        console.log('App cleanup function called.');
+      };
+    }
+    // BLE setup
     if (Platform.OS === 'android') {
       BleManager.enableBluetooth().then(() => {
         console.log('Bluetooth is turned on!');
@@ -291,6 +297,10 @@ function App(): React.JSX.Element {
     serviceUUID = TOAST_E_SERVICE_UUID,
     charUUID = TOAST_E_CHAR_UUID,
   ) => {
+    if (isSimulator) {
+      console.log('simulator, not sending subscribe request');
+      return;
+    }
     BleManager.startNotification(peripheral.id, serviceUUID, charUUID)
       .then(() => {
         console.log('Started notifications on ' + peripheral.id);
@@ -315,6 +325,10 @@ function App(): React.JSX.Element {
     serviceUUID = TOAST_E_SERVICE_UUID,
     charUUID = TOAST_E_CHAR_UUID,
   ) => {
+    if (isSimulator) {
+      console.log('simulator, not sending stop notifications');
+      return;
+    }
     console.log('trying to stop notifications on: ', peripheral.id);
     BleManager.stopNotification(peripheral.id, serviceUUID, charUUID)
       .then(() => {
@@ -359,6 +373,10 @@ function App(): React.JSX.Element {
     serviceUUID: String = TOAST_E_SERVICE_UUID,
     charUUID: String = TOAST_E_CHAR_UUID,
   ) => {
+    if (isSimulator) {
+      console.log('simulator, not sending target crispiness command');
+      return;
+    }
     // TODO: rework this function
     console.log(
       'trying to write to: ',
@@ -388,6 +406,10 @@ function App(): React.JSX.Element {
     serviceUUID: String = TOAST_E_SERVICE_UUID,
     charUUID: String = TOAST_E_CHAR_UUID,
   ) => {
+    if (isSimulator) {
+      console.log('simulator, not sending cancel command');
+      return;
+    }
     const message = generateBleMessage(MessageTypes.CANCEL, sendCancel);
     console.log('trying to write to: ', peripheral.id, ' with: ', message);
     BleManager.write(peripheral.id, serviceUUID, charUUID, message)
@@ -401,6 +423,8 @@ function App(): React.JSX.Element {
   };
 
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
+  const [developerMode, setDeveloperMode] = useState(true);
+  const [isSimulator, setIsSimulator] = useState(false); // Simulator or real device
 
   // Ble Context
   const appContexInitialState = {
@@ -458,8 +482,10 @@ function App(): React.JSX.Element {
           ...contextSetters,
           ...bleFunctions,
           setSettingsModalVisible,
+          developerMode,
+          isSimulator,
         }}>
-        {bleData.connectedDevices.length === 0 ? (
+        {bleData.connectedDevices.length === 0 && !isSimulator ? (
           <WelcomeScreen
             reconnectToPreviousDevice={reconnectToPreviousDevice}
             devices={bleData.connectedDevices}
@@ -488,6 +514,8 @@ function App(): React.JSX.Element {
           animationType="slide">
           <SettingsModal
             setSettingsModalVisible={setSettingsModalVisible}
+            developerMode={developerMode}
+            setDeveloperMode={setDeveloperMode}
             startScan={startScan}
             stopScan={stopScan}
             isScanning={isScanning}

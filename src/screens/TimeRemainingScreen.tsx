@@ -32,10 +32,16 @@ Sound.setCategory('Playback');
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
   const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
-  const [percentageRemaining, setPercentageRemaining] = useState(90); // seconds
+  const [percentageRemaining, setPercentageRemaining] = useState(99);
 
-  const {toasterState, writeCancelCharacteristic, stopToasterNotifications} =
-    useContext(AppContext);
+  const {
+    toasterState,
+    writeCancelCharacteristic,
+    stopToasterNotifications,
+    setSettingsModalVisible,
+    developerMode,
+    isSimulator,
+  } = useContext(AppContext);
 
   const cancelResetBtnFunc = () => {
     navigation.navigate('Selection');
@@ -53,12 +59,7 @@ const TimeRemainingScreen = ({navigation}) => {
         return;
       }
       // loaded successfully
-      console.log(
-        'duration in seconds: ' +
-          whoosh.getDuration() +
-          'number of channels: ' +
-          whoosh.getNumberOfChannels(),
-      );
+      console.log('Loaded sound with duration: ' + whoosh.getDuration() + 's');
     });
     return () => {
       whoosh.release(); // Release the audio player resource
@@ -66,15 +67,25 @@ const TimeRemainingScreen = ({navigation}) => {
   }, []);
 
   useEffect(() => {
-    setPercentageRemaining(
-      Math.round(
-        Math.abs(
-          100 -
-            (toasterState.current_crispiness / toasterState.target_crispiness) *
-              100,
+    console.log('percentage', percentageRemaining);
+    setTimeout(() => {
+      setPercentageRemaining(previous => (previous > 0 ? previous - 1 : 100));
+    }, 1000);
+  }, [percentageRemaining]);
+
+  useEffect(() => {
+    if (!isSimulator) {
+      setPercentageRemaining(
+        Math.round(
+          Math.abs(
+            100 -
+              (toasterState.current_crispiness /
+                toasterState.target_crispiness) *
+                100,
+          ),
         ),
-      ),
-    );
+      );
+    }
   }, [toasterState.current_crispiness]);
 
   useEffect(() => {
@@ -103,11 +114,11 @@ const TimeRemainingScreen = ({navigation}) => {
           console.log('playback failed due to audio decoding errors');
         }
       });
-      //   Alert.alert('Toast Ready!', '', [
-      //     {text: 'Restart Timer', onPress: () => setTimeRemaining(999)},
-      //   ]);
     }
   }, [toasterState.controller_state]);
+
+  // TODO: move this elsewhere
+  const circleButtonRadius = 65;
 
   return (
     <>
@@ -121,15 +132,17 @@ const TimeRemainingScreen = ({navigation}) => {
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader />
+          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
           <View
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <Text style={{fontSize: 30, paddingVertical: 10}}>
               {toasterState.controller_state}
             </Text>
-            <Text style={{fontSize: 20, paddingVertical: 40}}>
-              Current Cripiness: {toasterState.current_crispiness}
-            </Text>
+            {developerMode && (
+              <Text style={{fontSize: 20, paddingVertical: 40}}>
+                Current Cripiness: {toasterState.current_crispiness}
+              </Text>
+            )}
 
             {toastingStatus === STATUS.DONE ? (
               <Text
@@ -150,21 +163,26 @@ const TimeRemainingScreen = ({navigation}) => {
                 </Text>
               </>
             )}
-            <Text style={{fontSize: 20, paddingVertical: 40}}>
-              Time remaining estimate: {toasterState.time_remaining_estimate}{' '}
-              {'\n'}
-              Percentage remaining: {percentageRemaining}%
-            </Text>
+            {developerMode && (
+              <Text style={{fontSize: 20, paddingVertical: 40}}>
+                Time remaining estimate: {toasterState.time_remaining_estimate}{' '}
+                {'\n'}
+                Percentage remaining: {percentageRemaining}%
+              </Text>
+            )}
           </View>
           <View style={{alignItems: 'center'}}>
             <TouchableOpacity onPress={cancelResetBtnFunc}>
               <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                <PercentageCircle percentage={percentageRemaining} />
+                <PercentageCircle
+                  percentage={percentageRemaining}
+                  radius={circleButtonRadius + 6}
+                />
                 <View
                   style={{
-                    borderRadius: 65,
-                    width: 130,
-                    height: 130,
+                    borderRadius: circleButtonRadius,
+                    width: circleButtonRadius * 2,
+                    height: circleButtonRadius * 2,
                     backgroundColor: 'brown',
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -191,9 +209,9 @@ const TimeRemainingScreen = ({navigation}) => {
 
 export default TimeRemainingScreen;
 
-const PercentageCircle = ({percentage}) => {
-  const percent1 = 50;
-  const percent2 = percentage > 50 ? percentage : 50 - percentage;
+const PercentageCircle = ({percentage, radius = 75}) => {
+  const fixedPercent = 50;
+  const movingPercent = percentage >= 50 ? percentage : percentage + 50;
 
   function percentToDegrees(percent) {
     console.log('percent', percent * 3.6);
@@ -202,26 +220,26 @@ const PercentageCircle = ({percentage}) => {
 
   const HalfCircle = ({rotation, mask = false}) => {
     const rotate = `${rotation}deg`;
-    console.log('rotate', rotate, mask);
+
     return (
       <View
         style={[
           styles2.outerCircle,
           {
-            borderRadius: 75,
+            borderRadius: radius,
             borderTopRightRadius: 0,
             borderBottomRightRadius: 0,
-            width: 75,
-            height: 150,
+            width: radius,
+            height: radius * 2,
             backgroundColor: mask ? Colors.lighter : 'orange',
             justifyContent: 'center',
             alignItems: 'center',
             position: 'absolute',
-            left: -10,
+            left: -6,
             transform: [
-              {translateX: 75 / 2},
+              {translateX: radius / 2},
               {rotate: rotate},
-              {translateX: -75 / 2},
+              {translateX: -radius / 2},
             ],
           },
         ]}
@@ -231,8 +249,11 @@ const PercentageCircle = ({percentage}) => {
 
   return (
     <>
-      <HalfCircle rotation={percentToDegrees(percent1)} />
-      <HalfCircle rotation={percentToDegrees(percent2)} mask={percent2 < 50} />
+      <HalfCircle rotation={percentToDegrees(fixedPercent)} radius={radius} />
+      <HalfCircle
+        rotation={percentToDegrees(movingPercent)}
+        mask={percentage < 50}
+      />
     </>
   );
 };

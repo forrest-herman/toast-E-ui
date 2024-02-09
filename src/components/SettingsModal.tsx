@@ -1,4 +1,11 @@
-import {Button, FlatList, Text, TouchableOpacity, View} from 'react-native';
+import {
+  Button,
+  FlatList,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 import {DeviceList} from './DeviceList';
@@ -10,6 +17,8 @@ const TOAST_E_SERVICE_UUID = '00000023-710e-4a5b-8d75-3e5b444bc3cf';
 
 const SettingsModal = ({
   setSettingsModalVisible,
+  setDeveloperMode,
+  developerMode,
   startScan,
   stopScan,
   isScanning,
@@ -18,10 +27,19 @@ const SettingsModal = ({
   connectToPeripheral,
   disconnectFromPeripheral,
 }) => {
+  const toggleDevMode = () =>
+    setDeveloperMode((previousState: boolean) => !previousState);
+
   return (
     <View style={{paddingHorizontal: 20, paddingVertical: 10, flex: 1}}>
       <View style={{flexDirection: 'row', justifyContent: 'center'}}>
-        <View style={{flex: 0.2}}></View>
+        <View style={{flex: 0.2}}>
+          <Switch
+            onValueChange={toggleDevMode}
+            value={developerMode}
+            trackColor={{true: 'red'}}
+          />
+        </View>
         <View style={{flex: 0.6}}>
           <Text
             style={[
