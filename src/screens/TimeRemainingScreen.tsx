@@ -1,5 +1,6 @@
-import React, {useContext, useEffect, useState} from 'react';
+import React, {useContext, useEffect, useRef, useState} from 'react';
 import {
+  Animated,
   SafeAreaView,
   Text,
   TouchableOpacity,
@@ -67,10 +68,12 @@ const TimeRemainingScreen = ({navigation}) => {
   }, []);
 
   useEffect(() => {
-    console.log('percentage', percentageRemaining);
-    setTimeout(() => {
-      setPercentageRemaining(previous => (previous > 0 ? previous - 1 : 100));
-    }, 1000);
+    if (isSimulator) {
+      console.log('percentageRemaining: ', percentageRemaining);
+      setTimeout(() => {
+        setPercentageRemaining(previous => (previous > 0 ? previous - 1 : 100));
+      }, 1000);
+    }
   }, [percentageRemaining]);
 
   useEffect(() => {
@@ -140,7 +143,8 @@ const TimeRemainingScreen = ({navigation}) => {
             </Text>
             {developerMode && (
               <Text style={{fontSize: 20, paddingVertical: 40}}>
-                Current Cripiness: {toasterState.current_crispiness}
+                Current Cripiness: {toasterState.current_crispiness} {'\n'}
+                Target Cripiness: {toasterState.target_crispiness}
               </Text>
             )}
 
@@ -210,19 +214,48 @@ const TimeRemainingScreen = ({navigation}) => {
 export default TimeRemainingScreen;
 
 const PercentageCircle = ({percentage, radius = 75}) => {
-  const fixedPercent = 50;
-  const movingPercent = percentage >= 50 ? percentage : percentage + 50;
+  const progressAnim = useRef(new Animated.Value(percentage)).current;
+
+  const moveProgress = value => {
+    console.log('progressAnim: ', progressAnim, ' -> ', value);
+    // Will change fadeAnim value to 1 in 5 seconds
+    Animated.timing(progressAnim, {
+      toValue: value,
+      duration: 300, // TODO: this needs to be variable as well
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const fixedRotation = percentToDegrees(50);
+  const movingRotation = percentToDegrees(
+    percentage >= 50 ? percentage : percentage + 50,
+  );
+
+  useEffect(() => {
+    moveProgress(percentage >= 50 ? percentage : percentage + 50);
+  }, [percentage]);
 
   function percentToDegrees(percent) {
-    console.log('percent', percent * 3.6);
     return percent * 3.6;
   }
 
-  const HalfCircle = ({rotation, mask = false}) => {
-    const rotate = `${rotation}deg`;
+  const HalfCircle = ({rotation, mask = false, animated = true}) => {
+    // moveProgress(rotation);
+    let rotate;
+    if (animated) {
+      rotate = progressAnim.interpolate({
+        inputRange: [0, 100],
+        // inputRange: [0, 50, 50, 100],
+        // outputRange: ['0deg', '0deg', '180deg', '360deg'],
+        outputRange: ['0deg', '360deg'],
+      });
+      // console.log('rotate: ', progressAnim);
+    } else {
+      rotate = `${rotation}deg`;
+    }
 
     return (
-      <View
+      <Animated.View
         style={[
           styles2.outerCircle,
           {
@@ -249,11 +282,8 @@ const PercentageCircle = ({percentage, radius = 75}) => {
 
   return (
     <>
-      <HalfCircle rotation={percentToDegrees(fixedPercent)} radius={radius} />
-      <HalfCircle
-        rotation={percentToDegrees(movingPercent)}
-        mask={percentage < 50}
-      />
+      <HalfCircle rotation={fixedRotation} animated={false} />
+      <HalfCircle rotation={movingRotation} mask={percentage < 50} />
     </>
   );
 };

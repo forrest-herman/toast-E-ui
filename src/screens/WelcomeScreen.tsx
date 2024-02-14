@@ -34,7 +34,7 @@ const WelcomeScreen = ({
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader />
+          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
           <View
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <Text style={{fontSize: 15}}>

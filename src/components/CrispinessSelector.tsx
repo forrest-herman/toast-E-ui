@@ -48,7 +48,7 @@ export const CrispinessSelector = ({
 
   useEffect(() => {
     if (toasterState.controller_state === 'TOASTING') toastingBegins();
-  }, [toasterState]);
+  }, [toasterState.controller_state]);
 
   return (
     <View

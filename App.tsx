@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import BleManager, {BleEventType} from 'react-native-ble-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import DeviceInfo from 'react-native-device-info';
 
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -49,6 +50,12 @@ function App(): React.JSX.Element {
   const reconnectToPreviousDevice = async () => {
     try {
       const deviceId = await AsyncStorage.getItem('deviceId');
+      console.log(
+        'storage device id',
+        deviceId,
+        ' vs state:',
+        previousDeviceId,
+      ); // TODO: how to get state to work in here?
       if (deviceId !== null) {
         console.log('Previous device', deviceId);
         // setTimeout(() => {
@@ -60,6 +67,22 @@ function App(): React.JSX.Element {
         //       console.log('error reconnecting to previous device', error);
         //     });
         // }, 1000);
+        let reconnectScanListener = BleManagerEmitter.addListener(
+          'BleManagerStopScan',
+          () => {
+            setIsScanning(false);
+            console.log('previousDeviceId', deviceId);
+            connectToDevice({id: deviceId})
+              .then(() => {
+                console.log('reconnected to previous device');
+              })
+              .catch(error => {
+                console.log('error reconnecting to previous device', error);
+              });
+            reconnectScanListener.remove();
+          },
+        );
+
         await BleManager.scan([], 1, true);
         setIsScanning(true);
         //   connectToDevice({id: deviceId})
@@ -89,18 +112,21 @@ function App(): React.JSX.Element {
   };
 
   useEffect(() => {
-    let prevDeviceId;
+    // app startup
+
     AsyncStorage.getItem('deviceId').then(deviceId => {
       console.log('Storage: ', deviceId);
       setPreviousDeviceId(deviceId);
-      prevDeviceId = deviceId;
     });
 
-    if (isSimulator) {
-      return () => {
-        console.log('App cleanup function called.');
-      };
-    }
+    DeviceInfo.isEmulator().then(isEmulator => {
+      setIsSimulator(isEmulator);
+      if (isSimulator) {
+        return () => {
+          console.log('App cleanup function called.');
+        };
+      }
+    });
     // BLE setup
     if (Platform.OS === 'android') {
       BleManager.enableBluetooth().then(() => {
@@ -115,7 +141,7 @@ function App(): React.JSX.Element {
       .then(() => {
         console.log('BleManager initialized');
         handleGetConnectedDevices();
-        reconnectToPreviousDevice();
+        // reconnectToPreviousDevice();
       })
       .catch(error => console.log('BleManager failed to init', error));
 
@@ -131,10 +157,15 @@ function App(): React.JSX.Element {
       'BleManagerDisconnectPeripheral',
       ({peripheral, domain, code}) => {
         console.log('Disconnected from ' + peripheral, 'error code:', code);
+        console.log('peripherals:', peripherals);
         let peripheral_object = peripherals.get(peripheral);
-        peripheral_object.connected = false;
-        peripherals.set(peripheral_object.id, peripheral);
-        setConnectedDevices(Array.from(peripherals.values())); // TODO: update this
+        // peripheral_object.connected = false; // TODO: why this error?
+
+        // peripherals.set(peripheral_object.id, peripheral);
+        // const newList = Array.from(peripherals.values()).filter(
+        //   p => p.connected,
+        // );
+        setConnectedDevices([]);
       },
     );
     let connectBleListener = BleManagerEmitter.addListener(
@@ -149,15 +180,6 @@ function App(): React.JSX.Element {
         setIsScanning(false);
         // console.log('discovered peripherals: ', peripherals);
         console.log('scan stopped');
-        // TODO: temp
-        console.log('previousDeviceId', prevDeviceId);
-        connectToDevice({id: prevDeviceId})
-          .then(() => {
-            console.log('reconnected to previous device');
-          })
-          .catch(error => {
-            console.log('error reconnecting to previous device', error);
-          });
       },
     );
 
