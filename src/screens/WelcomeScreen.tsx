@@ -1,7 +1,9 @@
 import React, {useState, useContext} from 'react';
 import {
   Button,
+  Dimensions,
   FlatList,
+  Image,
   SafeAreaView,
   Text,
   TouchableOpacity,
@@ -15,12 +17,16 @@ import {styles} from '../styles/styles';
 
 import {AppContext} from '../../App';
 
+const height = Dimensions.get('window').height;
+const width = Dimensions.get('window').width;
+
 const WelcomeScreen = ({
   reconnectToPreviousDevice,
   devices = [],
   previousDeviceId,
 }) => {
-  const {setSettingsModalVisible} = useContext(AppContext);
+  const {setSettingsModalVisible, isSimulator, orientationIsPortrait} =
+    useContext(AppContext);
 
   return (
     <>
@@ -35,24 +41,61 @@ const WelcomeScreen = ({
         }}>
         <View style={{flex: 1}}>
           <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
-          <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text style={{fontSize: 15}}>
-              {devices.length} device(s) connected
-            </Text>
-            <Text style={{fontSize: 30}}>No Toast-E Connected</Text>
-            <ActionButton
-              reconnectFn={reconnectToPreviousDevice}
-              previousDevice={previousDeviceId}
-              setSettingsModalVisible={setSettingsModalVisible}
-            />
-            <FlatList
-              style={{marginTop: 5, flexGrow: 0, maxHeight: 500}}
-              data={devices}
-              renderItem={({item}) => <Text>{JSON.stringify(item)}</Text>}
-              keyExtractor={item => item?.id}
-            />
-          </View>
+          {devices.length > 0 || isSimulator ? (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                overflow: 'hidden',
+                backgroundColor: 'white',
+                paddingBottom: orientationIsPortrait ? 100 : 15,
+              }}>
+              <Image
+                style={{
+                  flex: 1,
+                  justifyContent: 'flex-end',
+                  alignItems: 'flex-end',
+                  width: 250,
+                  marginBottom: orientationIsPortrait ? 50 : 0,
+                }}
+                resizeMode="cover"
+                source={require('../assets/toaster.gif')}
+              />
+              <Text style={{fontSize: 30}}>Insert a toastable to begin.</Text>
+            </View>
+          ) : (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <Text style={{fontSize: 15}}>
+                {devices.length} device(s) connected
+              </Text>
+              <Text style={{fontSize: 30}}>No Toast-E Connected</Text>
+              <View style={{marginVertical: 20}}>
+                {previousDeviceId !== null && (
+                  <ActionButton
+                    reconnectFn={reconnectToPreviousDevice}
+                    previousDevice={previousDeviceId}
+                    setSettingsModalVisible={setSettingsModalVisible}
+                  />
+                )}
+                <ActionButton
+                  reconnectFn={reconnectToPreviousDevice}
+                  setSettingsModalVisible={setSettingsModalVisible}
+                />
+              </View>
+              {/* <FlatList
+                style={{marginTop: 5, flexGrow: 0, maxHeight: 500}}
+                data={devices}
+                renderItem={({item}) => <Text>{JSON.stringify(item)}</Text>}
+                keyExtractor={item => item?.id}
+              /> */}
+            </View>
+          )}
         </View>
       </SafeAreaView>
     </>
@@ -60,7 +103,7 @@ const WelcomeScreen = ({
 };
 
 const ActionButton = ({
-  previousDevice,
+  previousDevice = null,
   reconnectFn,
   setSettingsModalVisible,
 }) => {
@@ -80,7 +123,7 @@ const ActionButton = ({
               backgroundColor: 'brown',
               justifyContent: 'center',
               alignItems: 'center',
-              margin: 40,
+              margin: 10,
               paddingHorizontal: 25,
               paddingVertical: 10,
             }}>

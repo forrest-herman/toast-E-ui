@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const ToastPreviewCarousel = ({target, setTarget}) => {
   const width = Dimensions.get('window').width;
+  const height = Dimensions.get('window').height;
 
   const images = [
     require('../assets/img/toast0.png'),
@@ -37,7 +38,7 @@ export const ToastPreviewCarousel = ({target, setTarget}) => {
         loop={false}
         defaultIndex={initSetting}
         width={width}
-        height={width + 20}
+        height={height / 2}
         autoPlay={false}
         data={images}
         scrollAnimationDuration={1000}
@@ -56,7 +57,7 @@ export const ToastPreviewCarousel = ({target, setTarget}) => {
               justifyContent: 'center',
             }}>
             <Image
-              style={{width: '100%', height: '100%'}}
+              style={{width: '100%', height: '100%', resizeMode: 'contain'}}
               source={images.at(index)}
             />
           </View>

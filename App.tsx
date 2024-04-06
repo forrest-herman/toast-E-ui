@@ -1,4 +1,10 @@
-import React, {useState, useEffect, createContext} from 'react';
+// TODO: remove this
+
+import {LogBox} from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']); // Ignore log notification by message
+LogBox.ignoreAllLogs(); //Ignore all log notifications
+
+import React, {useState, useEffect, createContext, useCallback} from 'react';
 import {
   Platform,
   NativeModules,
@@ -6,6 +12,7 @@ import {
   PermissionsAndroid,
   Alert,
   Modal,
+  Dimensions,
 } from 'react-native';
 import BleManager, {BleEventType} from 'react-native-ble-manager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -111,6 +118,15 @@ function App(): React.JSX.Element {
     } else setConnectedDevices([]);
   };
 
+  const getOrientation = () => {
+    console.log('checking orientation');
+    if (Dimensions.get('window').width <= Dimensions.get('window').height) {
+      setOrientationPortrait(true);
+    } else {
+      setOrientationPortrait(false);
+    }
+  };
+
   useEffect(() => {
     // app startup
 
@@ -118,6 +134,8 @@ function App(): React.JSX.Element {
       console.log('Storage: ', deviceId);
       setPreviousDeviceId(deviceId);
     });
+
+    getOrientation();
 
     DeviceInfo.isEmulator().then(isEmulator => {
       setIsSimulator(isEmulator);
@@ -127,6 +145,7 @@ function App(): React.JSX.Element {
         };
       }
     });
+
     // BLE setup
     if (Platform.OS === 'android') {
       BleManager.enableBluetooth().then(() => {
@@ -212,6 +231,16 @@ function App(): React.JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    const orientationListener = Dimensions.addEventListener(
+      'change',
+      () => getOrientation,
+    );
+    return () => {
+      orientationListener.remove();
+    };
+  });
+
   const startScan = (
     serviceUUIDs: string[] = [TOAST_E_SERVICE_UUID],
     seconds: number = 2,
@@ -248,7 +277,7 @@ function App(): React.JSX.Element {
       await new Promise(async (resolve, reject) => {
         if (timeout !== null) this.connectTimeout = setTimeout(reject, timeout);
 
-        BleManager.connect(peripheral.id) // TODO: why doesn't this need to actually exist?
+        BleManager.connect(peripheral.id) // TODO: why doesn't this peripheral need to actually exist?
           .then(() => {
             peripheral.connected = true;
             peripherals.set(peripheral.id, peripheral);
@@ -263,7 +292,8 @@ function App(): React.JSX.Element {
             console.log(
               'Connected to ' + peripheral.name + '. Now getting services',
             );
-            getServices(peripheral);
+            getServices(peripheral); // await
+
             resolve('connected');
           })
           .catch(error => {
@@ -292,6 +322,9 @@ function App(): React.JSX.Element {
         console.log('Peripheral info:', peripheralInfo);
         peripheral.info = peripheralInfo;
         peripherals.set(peripheral.id, peripheral);
+
+        // readCharacteristic(peripheral, TOAST_E_SERVICE_UUID, TOAST_E_CHAR_UUID);
+        startToasterNotifications({id: '59b53ab0-6c1b-a443-9e14-e698151c98ea'});
       })
       .catch(error => console.log('error retrieving services', error));
   };
@@ -314,33 +347,39 @@ function App(): React.JSX.Element {
       });
   };
 
-  const startToasterNotifications = (
-    peripheral = bleData.connectedDevices?.[0],
-    serviceUUID = TOAST_E_SERVICE_UUID,
-    charUUID = TOAST_E_CHAR_UUID,
-  ) => {
-    if (isSimulator) {
-      console.log('simulator, not sending subscribe request');
-      return;
-    }
-    BleManager.startNotification(peripheral.id, serviceUUID, charUUID)
-      .then(() => {
-        console.log('Started notifications on ' + peripheral.id);
-        // readCharacteristic(peripheral);
-        // readCurrentCrispinessCharacteristic(peripheral);
-        BleManagerEmitter.addListener(
-          BleEventType.BleManagerDidUpdateValueForCharacteristic,
-          ({value, peripheral, characteristic, service}) => {
-            const data = JSON.parse(bytesToString(value));
-            console.log(`Received ${data} with values ${Object.values(data)}`);
-            setToasterState(data);
-          },
-        );
-      })
-      .catch(error => {
-        console.log('Notification error', error);
-      });
-  };
+  const startToasterNotifications = useCallback(
+    async (
+      peripheral = bleData.connectedDevices?.[0],
+      serviceUUID = TOAST_E_SERVICE_UUID,
+      charUUID = TOAST_E_CHAR_UUID,
+    ) => {
+      if (isSimulator) {
+        console.log('simulator, not sending subscribe request');
+        return;
+      }
+      console.log('default option: ', bleData.connectedDevices);
+      BleManager.startNotification(peripheral?.id, serviceUUID, charUUID)
+        .then(() => {
+          console.log('Started notifications on ' + peripheral.id);
+          // readCharacteristic(peripheral);
+          // readCurrentCrispinessCharacteristic(peripheral);
+          BleManagerEmitter.addListener(
+            BleEventType.BleManagerDidUpdateValueForCharacteristic,
+            ({value, peripheral, characteristic, service}) => {
+              const data = JSON.parse(bytesToString(value));
+              console.log(
+                `Received ${data} with values ${Object.values(data)}`,
+              );
+              setToasterState(data);
+            },
+          );
+        })
+        .catch(error => {
+          console.log('Notification error', error);
+        });
+    },
+    [bleData],
+  );
 
   const stopToasterNotifications = (
     peripheral = bleData.connectedDevices?.[0],
@@ -365,24 +404,9 @@ function App(): React.JSX.Element {
   const readCharacteristic = (peripheral, serviceUUID, charUUID) => {
     BleManager.read(peripheral.id, serviceUUID, charUUID)
       .then(readData => {
-        console.log('value: ' + bytesToString(readData));
-        // const buffer = Buffer.from(readData);
-        // const sensorData = buffer.readUInt8(1);
-        // console.log('Read: ' + sensorData);
-      })
-      .catch(error => {
-        console.log('Read error', error);
-      });
-  };
-
-  const readCurrentCrispinessCharacteristic = (
-    peripheral = bleData.connectedDevices?.[0],
-    serviceUUID = TOAST_E_SERVICE_UUID,
-    charUUID = TOAST_E_CHAR_UUID,
-  ) => {
-    BleManager.read(peripheral.id, serviceUUID, charUUID)
-      .then(readData => {
-        console.log('current Crispiness: ' + bytesToString(readData));
+        const data = JSON.parse(bytesToString(readData));
+        console.log(`Received ${data} with values ${Object.values(data)}`);
+        // setToasterState(data);
       })
       .catch(error => {
         console.log('Read error', error);
@@ -391,7 +415,7 @@ function App(): React.JSX.Element {
 
   const writeTargetCrispinessCharacteristic = (
     data: number,
-    peripheral = bleData.connectedDevices?.[0], // Temp
+    peripheral = bleData.connectedDevices?.[0],
     serviceUUID: String = TOAST_E_SERVICE_UUID,
     charUUID: String = TOAST_E_CHAR_UUID,
   ) => {
@@ -422,9 +446,7 @@ function App(): React.JSX.Element {
   };
 
   const writeCancelCharacteristic = (
-    peripheral = {
-      id: '3261042b-e99d-98d6-84ae-2786329fa5a6',
-    }, // bleData.connectedDevices?.[0]?.['id'] // TODO: why this no work?
+    peripheral = bleData.connectedDevices?.[0],
     serviceUUID: String = TOAST_E_SERVICE_UUID,
     charUUID: String = TOAST_E_CHAR_UUID,
   ) => {
@@ -437,7 +459,27 @@ function App(): React.JSX.Element {
     BleManager.write(peripheral.id, serviceUUID, charUUID, message)
       .then(() => {
         console.log('Sent Cancel Command');
-        stopToasterNotifications(peripheral.id);
+        // stopToasterNotifications(peripheral.id);
+      })
+      .catch(error => {
+        console.log('Write error', error);
+      });
+  };
+
+  const writeCrispReset = (
+    peripheral = bleData.connectedDevices?.[0],
+    serviceUUID: String = TOAST_E_SERVICE_UUID,
+    charUUID: String = TOAST_E_CHAR_UUID,
+  ) => {
+    if (isSimulator) {
+      console.log('simulator, not sending cancel command');
+      return;
+    }
+    const message = generateBleMessage(MessageTypes.RESET, sendCancel);
+    console.log('trying to write to: ', peripheral.id, ' with: ', message);
+    BleManager.write(peripheral.id, serviceUUID, charUUID, message)
+      .then(() => {
+        console.log('Sent Reset Crisp Command');
       })
       .catch(error => {
         console.log('Write error', error);
@@ -447,6 +489,7 @@ function App(): React.JSX.Element {
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [developerMode, setDeveloperMode] = useState(true);
   const [isSimulator, setIsSimulator] = useState(false); // Simulator or real device
+  const [orientationIsPortrait, setOrientationPortrait] = useState(true);
 
   // Ble Context
   const appContexInitialState = {
@@ -455,12 +498,14 @@ function App(): React.JSX.Element {
     discoveredDevices: [],
   };
   const [bleData, setBleData] = useState(appContexInitialState);
-  const setToasterState = toasterState => {
+  const [toasterState2, setToasterState] = useState({});
+  const setToasterState2 = toasterState => {
     const newState = {...bleData, toasterState};
+    console.log(newState, 'new state');
     setBleData(newState);
   };
   const setConnectedDevices = connectedDevices => {
-    // console.log('set connected devices', connectedDevices);
+    console.log('set connected devices', connectedDevices);
     const newState = {...bleData, connectedDevices};
     setBleData(newState);
   };
@@ -479,6 +524,7 @@ function App(): React.JSX.Element {
     startToasterNotifications,
     stopToasterNotifications,
     writeCancelCharacteristic,
+    writeCrispReset,
     startScan,
     stopScan,
     connectToDevice,
@@ -488,7 +534,7 @@ function App(): React.JSX.Element {
   // Temp
   useEffect(() => {
     //   console.log('discoveredDevices (useEffect): ', bleData.discoveredDevices);
-    console.log(bleData.connectedDevices.length, 'connected Devices');
+    // console.log(bleData.connectedDevices.length, 'connected Devices');
     console.log('connected Devices (useEffect): ', bleData.connectedDevices);
   }, [bleData.connectedDevices]);
 
@@ -506,8 +552,12 @@ function App(): React.JSX.Element {
           setSettingsModalVisible,
           developerMode,
           isSimulator,
+          orientationIsPortrait,
+          toasterState2,
         }}>
-        {bleData.connectedDevices.length === 0 && !isSimulator ? (
+        {(toasterState2.controller_state === 'IDLE' ||
+          Object.keys(toasterState2).length === 0) &&
+        !isSimulator ? (
           <WelcomeScreen
             reconnectToPreviousDevice={reconnectToPreviousDevice}
             devices={bleData.connectedDevices}

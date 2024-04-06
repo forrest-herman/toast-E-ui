@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState, useContext, useEffect} from 'react';
 import {SafeAreaView, View} from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
 
@@ -17,6 +17,8 @@ const ToastSelectionScreen = ({navigation}) => {
     startToasterNotifications,
     stopToasterNotifications,
     writeTargetCrispinessCharacteristic,
+    orientationIsPortrait,
+    toasterState2,
   } = useContext(AppContext);
 
   return (
@@ -31,15 +33,20 @@ const ToastSelectionScreen = ({navigation}) => {
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
+          {orientationIsPortrait ? (
+            <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
+          ) : (
+            <ToastEHeader title="Select your preference" fontSize={30} />
+          )}
           <CrispinessSelector
             target={toastTarget}
             setTarget={setToastTarget}
             navigation={navigation}
-            toasterState={toasterState}
+            toasterState={toasterState2}
             writeTargetCrispinessCharacteristic={
               writeTargetCrispinessCharacteristic
             }
+            orientationIsPortrait={orientationIsPortrait}
             startNotifications={startToasterNotifications}
             stopNotifications={stopToasterNotifications}
           />

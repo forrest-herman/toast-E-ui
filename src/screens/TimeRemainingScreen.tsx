@@ -36,18 +36,19 @@ const TimeRemainingScreen = ({navigation}) => {
   const [percentageRemaining, setPercentageRemaining] = useState(99);
 
   const {
-    toasterState,
+    toasterState2,
     writeCancelCharacteristic,
+    writeCrispReset,
     stopToasterNotifications,
     setSettingsModalVisible,
     developerMode,
     isSimulator,
+    orientationIsPortrait,
   } = useContext(AppContext);
 
   const cancelResetBtnFunc = () => {
-    navigation.navigate('Selection');
-    stopToasterNotifications();
-    // if (toasterState.controller_state === STATUS.TOASTING) TODO: remove this temp
+    // navigation.navigate('Selection');
+    // if (toasterState2.controller_state === STATUS.TOASTING) TODO: remove this temp
     writeCancelCharacteristic();
   };
 
@@ -82,23 +83,23 @@ const TimeRemainingScreen = ({navigation}) => {
         Math.round(
           Math.abs(
             100 -
-              (toasterState.current_crispiness /
-                toasterState.target_crispiness) *
+              (toasterState2.current_crispiness /
+                toasterState2.target_crispiness) *
                 100,
           ),
         ),
       );
     }
-  }, [toasterState.current_crispiness]);
+  }, [toasterState2.current_crispiness]);
 
   useEffect(() => {
     if (
-      Math.abs(toasterState.time_remaining_estimate - timeRemaining_sec) > 3
+      Math.abs(toasterState2.time_remaining_estimate - timeRemaining_sec) > 3
     ) {
-      setTimeRemaining(toasterState.time_remaining_estimate);
+      setTimeRemaining(toasterState2.time_remaining_estimate);
     } else if (
       timeRemaining_sec > 0 &&
-      toasterState.controller_state === STATUS.TOASTING
+      toasterState2.controller_state === STATUS.TOASTING
     ) {
       setTimeout(() => {
         setTimeRemaining(timeRemaining_sec - 1);
@@ -107,7 +108,7 @@ const TimeRemainingScreen = ({navigation}) => {
   }, [timeRemaining_sec]);
 
   useEffect(() => {
-    if (toasterState.controller_state === STATUS.DONE) {
+    if (toasterState2.controller_state === STATUS.DONE) {
       setToastingStatus(STATUS.DONE); // TODO: redundant
       // Play the sound with an onEnd callback
       whoosh.play(success => {
@@ -117,8 +118,12 @@ const TimeRemainingScreen = ({navigation}) => {
           console.log('playback failed due to audio decoding errors');
         }
       });
+
+      setTimeout(() => {
+        writeCrispReset();
+      }, 5000);
     }
-  }, [toasterState.controller_state]);
+  }, [toasterState2.controller_state]);
 
   // TODO: move this elsewhere
   const circleButtonRadius = 65;
@@ -137,14 +142,19 @@ const TimeRemainingScreen = ({navigation}) => {
         <View style={{flex: 1}}>
           <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
           <View
-            style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-            <Text style={{fontSize: 30, paddingVertical: 10}}>
-              {toasterState.controller_state}
-            </Text>
-            {developerMode && (
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              flexDirection: 'row',
+            }}>
+            {/* <Text style={{fontSize: 30, paddingVertical: 10}}>
+              {toasterState2.controller_state}
+            </Text> */}
+            {developerMode && orientationIsPortrait && (
               <Text style={{fontSize: 20, paddingVertical: 40}}>
-                Current Cripiness: {toasterState.current_crispiness} {'\n'}
-                Target Cripiness: {toasterState.target_crispiness}
+                Current Cripiness: {toasterState2.current_crispiness} {'\n'}
+                Target Cripiness: {toasterState2.target_crispiness}
               </Text>
             )}
 
@@ -167,15 +177,15 @@ const TimeRemainingScreen = ({navigation}) => {
                 </Text>
               </>
             )}
-            {developerMode && (
+            {developerMode && orientationIsPortrait && (
               <Text style={{fontSize: 20, paddingVertical: 40}}>
-                Time remaining estimate: {toasterState.time_remaining_estimate}{' '}
+                Time remaining estimate: {toasterState2.time_remaining_estimate}{' '}
                 {'\n'}
                 Percentage remaining: {percentageRemaining}%
               </Text>
             )}
           </View>
-          <View style={{alignItems: 'center'}}>
+          <View style={{alignItems: 'center', marginBottom: 20}}>
             <TouchableOpacity onPress={cancelResetBtnFunc}>
               <View style={{alignItems: 'center', justifyContent: 'center'}}>
                 <PercentageCircle
@@ -197,7 +207,7 @@ const TimeRemainingScreen = ({navigation}) => {
                       fontSize: 35,
                       textAlign: 'center',
                     }}>
-                    {toasterState.controller_state === STATUS.TOASTING
+                    {toasterState2.controller_state === STATUS.TOASTING
                       ? 'Cancel'
                       : 'Reset'}
                   </Text>
@@ -242,7 +252,7 @@ const PercentageCircle = ({percentage, radius = 75}) => {
   const HalfCircle = ({rotation, mask = false, animated = true}) => {
     // moveProgress(rotation);
     let rotate;
-    if (animated) {
+    if (false && animated) {
       rotate = progressAnim.interpolate({
         inputRange: [0, 100],
         // inputRange: [0, 50, 50, 100],
@@ -255,7 +265,7 @@ const PercentageCircle = ({percentage, radius = 75}) => {
     }
 
     return (
-      <Animated.View
+      <View
         style={[
           styles2.outerCircle,
           {

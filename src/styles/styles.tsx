@@ -46,7 +46,6 @@ export const styles = StyleSheet.create({
     backgroundColor: '#2196F3',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 20,
   },
   scanButtonText: {
     color: 'white',

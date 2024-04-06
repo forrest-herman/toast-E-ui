@@ -56,22 +56,29 @@ const SettingsModal = ({
           />
         </View>
       </View>
-      <TouchableOpacity
-        activeOpacity={0.5}
-        style={styles.scanButton}
-        onPress={startScan}>
-        <Text style={styles.scanButtonText}>
-          {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
-        </Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        activeOpacity={0.5}
-        style={styles.scanButton}
-        onPress={() => startScan([TOAST_E_SERVICE_UUID], 4)}>
-        <Text style={styles.scanButtonText}>
-          {isScanning ? 'Scanning...' : 'Scan Raspberry Pi Only'}
-        </Text>
-      </TouchableOpacity>
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'center',
+          gap: 10,
+        }}>
+        <TouchableOpacity
+          activeOpacity={0.5}
+          style={styles.scanButton}
+          onPress={startScan}>
+          <Text style={styles.scanButtonText}>
+            {isScanning ? 'Scanning...' : 'Scan Bluetooth Devices'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          activeOpacity={0.5}
+          style={styles.scanButton}
+          onPress={() => startScan([TOAST_E_SERVICE_UUID], 4)}>
+          <Text style={styles.scanButtonText}>
+            {isScanning ? 'Scanning...' : 'Scan Raspberry Pi Only'}
+          </Text>
+        </TouchableOpacity>
+      </View>
       <Text style={[styles.subtitle, {color: Colors.black}]}>
         Discovered Devices ({discoveredDevices.length}):
       </Text>
