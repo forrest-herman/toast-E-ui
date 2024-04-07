@@ -7,13 +7,20 @@ import {
   View,
   Alert,
   StyleSheet,
+  Dimensions,
 } from 'react-native';
 import {Colors} from 'react-native/Libraries/NewAppScreen';
+
+import AwesomeIcon from 'react-native-vector-icons/FontAwesome6';
+
+import BigSlider from '../components/BigSlider';
+import LinearGradient from 'react-native-linear-gradient';
 
 import {AppContext} from '../../App';
 import {ToastEHeader} from '../components/Header.tsx';
 import {formatTime} from '../utils/helperFunctions';
 import {styles} from '../styles/styles';
+import GradientSlider from '../components/GradientSlider.tsx';
 
 const STATUS = {
   IDLE: 'IDLE',
@@ -69,15 +76,6 @@ const TimeRemainingScreen = ({navigation}) => {
   }, []);
 
   useEffect(() => {
-    if (isSimulator) {
-      console.log('percentageRemaining: ', percentageRemaining);
-      setTimeout(() => {
-        setPercentageRemaining(previous => (previous > 0 ? previous - 1 : 100));
-      }, 1000);
-    }
-  }, [percentageRemaining]);
-
-  useEffect(() => {
     if (!isSimulator) {
       setPercentageRemaining(
         Math.round(
@@ -127,6 +125,8 @@ const TimeRemainingScreen = ({navigation}) => {
 
   // TODO: move this elsewhere
   const circleButtonRadius = 65;
+  const height = Dimensions.get('window').height;
+  const diameter = Math.min(height / 4, 135);
 
   return (
     <>
@@ -140,80 +140,156 @@ const TimeRemainingScreen = ({navigation}) => {
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
+          <ToastEHeader />
           <View
             style={{
               flex: 1,
-              justifyContent: 'center',
-              alignItems: 'center',
-              flexDirection: 'row',
+              flexDirection: orientationIsPortrait ? 'column' : 'row',
+              justifyContent: 'space-between',
             }}>
-            {/* <Text style={{fontSize: 30, paddingVertical: 10}}>
+            <View
+              style={{
+                flex: 0.2,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginHorizontal: 20,
+              }}>
+              <GradientSlider
+                // inputValue={toasterState2.current_crispiness}
+                inputValue={toasterState2.target_crispiness}
+                showIcons={false}
+                showLabel={false}
+                width={60}
+              />
+            </View>
+            <View
+              style={{
+                flex: 0.6,
+                justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: orientationIsPortrait ? 'row' : 'column',
+              }}>
+              {/* <Text style={{fontSize: 30, paddingVertical: 10}}>
               {toasterState2.controller_state}
             </Text> */}
-            {developerMode && orientationIsPortrait && (
-              <Text style={{fontSize: 20, paddingVertical: 40}}>
-                Current Cripiness: {toasterState2.current_crispiness} {'\n'}
-                Target Cripiness: {toasterState2.target_crispiness}
-              </Text>
-            )}
+              {developerMode && orientationIsPortrait && (
+                <Text style={{fontSize: 20, paddingVertical: 40}}>
+                  Current Cripiness: {toasterState2.current_crispiness} {'\n'}
+                  Target Cripiness: {toasterState2.target_crispiness}
+                </Text>
+              )}
 
-            {toastingStatus === STATUS.DONE ? (
-              <Text
-                style={{
-                  fontSize: 50,
-                  paddingVertical: 40,
-                  textAlign: 'center',
-                }}>
-                Toasting Complete!
-              </Text>
-            ) : (
-              <>
-                <Text style={{fontSize: 25, textAlign: 'center'}}>
-                  Estimated {'\n'}Time Remaining
+              {toastingStatus === STATUS.DONE ? (
+                <Text
+                  style={{
+                    fontSize: 50,
+                    paddingVertical: 40,
+                    textAlign: 'center',
+                  }}>
+                  Toasting {'\n'} Complete!
                 </Text>
-                <Text style={{fontSize: 70}}>
-                  {formatTime(timeRemaining_sec)}
+              ) : (
+                <>
+                  <Text style={{fontSize: 25, textAlign: 'center'}}>
+                    Estimated {'\n'}Time Remaining
+                  </Text>
+                  <Text style={{fontSize: 75}}>
+                    {formatTime(timeRemaining_sec)}
+                  </Text>
+                </>
+              )}
+              {developerMode && orientationIsPortrait && (
+                <Text style={{fontSize: 20, paddingVertical: 40}}>
+                  Time remaining estimate:{' '}
+                  {toasterState2.time_remaining_estimate} {'\n'}
+                  Percentage remaining: {percentageRemaining}%
                 </Text>
-              </>
-            )}
-            {developerMode && orientationIsPortrait && (
-              <Text style={{fontSize: 20, paddingVertical: 40}}>
-                Time remaining estimate: {toasterState2.time_remaining_estimate}{' '}
-                {'\n'}
-                Percentage remaining: {percentageRemaining}%
-              </Text>
-            )}
-          </View>
-          <View style={{alignItems: 'center', marginBottom: 20}}>
-            <TouchableOpacity onPress={cancelResetBtnFunc}>
-              <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                <PercentageCircle
-                  percentage={percentageRemaining}
-                  radius={circleButtonRadius + 6}
-                />
+              )}
+            </View>
+
+            <View
+              style={{
+                flex: 0.2,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginHorizontal: 20,
+              }}>
+              <TouchableOpacity onPress={cancelResetBtnFunc}>
                 <View
                   style={{
-                    borderRadius: circleButtonRadius,
-                    width: circleButtonRadius * 2,
-                    height: circleButtonRadius * 2,
-                    backgroundColor: 'brown',
-                    justifyContent: 'center',
                     alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: 10,
+                    paddingTop: 10,
                   }}>
-                  <Text
+                  {/* <PercentageCircle
+                    percentage={percentageRemaining}
+                    _radius={diameter / 2}
+                    width={4}
+                  /> */}
+                  <View
                     style={{
-                      color: '#F3F3F3',
-                      fontSize: 35,
-                      textAlign: 'center',
+                      borderRadius: diameter / 2,
+                      width: diameter,
+                      height: diameter,
+                      backgroundColor: '#5e2d16',
+                      // backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      // margin: 10,
                     }}>
-                    {toasterState2.controller_state === STATUS.TOASTING
-                      ? 'Cancel'
-                      : 'Reset'}
-                  </Text>
+                    <AwesomeIcon
+                      name={
+                        toasterState2.controller_state === STATUS.TOASTING
+                          ? 'xmark'
+                          : 'arrow-rotate-left'
+                      }
+                      size={50}
+                      color={'white'}
+                    />
+                  </View>
                 </View>
-              </View>
-            </TouchableOpacity>
+              </TouchableOpacity>
+              <Text
+                style={{
+                  color: '5e2d16',
+                  fontSize: 15,
+                  textAlign: 'center',
+                  paddingBottom: 20,
+                }}>
+                {toasterState2.controller_state === STATUS.TOASTING
+                  ? 'Cancel'
+                  : 'Reset'}
+              </Text>
+              {/* <TouchableOpacity onPress={cancelResetBtnFunc}>
+                <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                  <PercentageCircle
+                    percentage={percentageRemaining}
+                    radius={circleButtonRadius + 6}
+                  />
+                  <View
+                    style={{
+                      borderRadius: circleButtonRadius,
+                      width: circleButtonRadius * 2,
+                      height: circleButtonRadius * 2,
+                      backgroundColor: 'brown',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}>
+                    <Text
+                      style={{
+                        color: '#F3F3F3',
+                        fontSize: 35,
+                        textAlign: 'center',
+                      }}>
+                      {toasterState2.controller_state === STATUS.TOASTING
+                        ? 'Cancel'
+                        : 'Reset'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity> */}
+            </View>
           </View>
         </View>
       </SafeAreaView>
@@ -223,8 +299,9 @@ const TimeRemainingScreen = ({navigation}) => {
 
 export default TimeRemainingScreen;
 
-const PercentageCircle = ({percentage, radius = 75}) => {
+const PercentageCircle = ({percentage, _radius = 75, width = 6}) => {
   const progressAnim = useRef(new Animated.Value(percentage)).current;
+  const radius = _radius + width;
 
   const moveProgress = value => {
     console.log('progressAnim: ', progressAnim, ' -> ', value);
@@ -274,11 +351,11 @@ const PercentageCircle = ({percentage, radius = 75}) => {
             borderBottomRightRadius: 0,
             width: radius,
             height: radius * 2,
-            backgroundColor: mask ? Colors.lighter : 'orange',
+            backgroundColor: mask ? Colors.lighter : 'brown',
             justifyContent: 'center',
             alignItems: 'center',
             position: 'absolute',
-            left: -6,
+            left: -width,
             transform: [
               {translateX: radius / 2},
               {rotate: rotate},

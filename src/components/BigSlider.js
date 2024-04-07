@@ -12,6 +12,7 @@ export default class BigSlider extends Component {
     value: 40,
     maximumValue: 100,
     minimumValue: 0,
+    showLabel: true,
     onSlidingStart: () => {},
     onValueChange: () => {},
     onSlidingComplete: () => {},
@@ -87,22 +88,16 @@ export default class BigSlider extends Component {
         style={[styles.container, this.props.style]}
         {...this.panResponder.panHandlers}>
         <View style={[styles.pendingTrack, {flex: 1 - unitValue}]} />
-        <View style={[styles.trackLabel, {position: 'absolute'}]}>
-          <Text style={styles.trackLabelText}>
-            {this.props.label || `${formatNumber(this.props.value)}%`}
-          </Text>
-        </View>
+        {this.props.showLabel && (
+          <View style={[styles.trackLabel, {position: 'absolute'}]}>
+            <Text style={styles.trackLabelText}>
+              {this.props.label || `${formatNumber(this.props.value)}%`}
+            </Text>
+          </View>
+        )}
         <View style={[styles.track, {flex: unitValue}, this.props.trackStyle]}>
-          {/* <LinearGradient
-            colors={['#edb985', '#5e2d16', '#240d02']}
-            style={{
-              flex: 1,
-              paddingLeft: 15,
-              paddingRight: 15,
-              borderRadius: 5,
-            }}> */}
           <View style={styles.thumb} />
-          {this.props.renderLabel ? (
+          {/* {this.props.renderLabel ? (
             this.props.renderLabel()
           ) : (
             <View style={styles.trackLabel}>
@@ -110,8 +105,7 @@ export default class BigSlider extends Component {
                 {this.props.label || `${formatNumber(this.props.value)}%`}
               </Text>
             </View>
-          )}
-          {/* </LinearGradient> */}
+          )} */}
         </View>
       </View>
     );

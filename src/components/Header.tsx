@@ -7,7 +7,7 @@ export const ToastEHeader = ({
   setSettingsModalVisible = undefined,
 }) => {
   return (
-    <View style={{backgroundColor: 'brown', paddingVertical: 10}}>
+    <View style={{backgroundColor: 'brown', paddingTop: 10, paddingBottom: 5}}>
       {/* <View style={{flex: 1, justifyContent: 'center'}}> */}
       <Text
         style={{

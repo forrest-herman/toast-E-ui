@@ -18,6 +18,7 @@ const ToastSelectionScreen = ({navigation}) => {
     stopToasterNotifications,
     writeTargetCrispinessCharacteristic,
     orientationIsPortrait,
+    isSimulator,
     toasterState2,
   } = useContext(AppContext);
 
@@ -49,6 +50,7 @@ const ToastSelectionScreen = ({navigation}) => {
             orientationIsPortrait={orientationIsPortrait}
             startNotifications={startToasterNotifications}
             stopNotifications={stopToasterNotifications}
+            isSimulator={isSimulator}
           />
         </View>
       </SafeAreaView>

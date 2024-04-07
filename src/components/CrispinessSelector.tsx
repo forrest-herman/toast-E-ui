@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+  Animated,
   Dimensions,
   Image,
   Text,
@@ -33,6 +34,7 @@ export const CrispinessSelector = ({
   orientationIsPortrait,
   startNotifications,
   stopNotifications,
+  isSimulator,
 }) => {
   const darkenFactor = 1 + target / 100;
   const [red, green, blue] = [156, 81, 37];
@@ -44,13 +46,17 @@ export const CrispinessSelector = ({
   ].map(Math.round);
   const a = 0.4 + target / 5;
 
-  const diameter = Math.min(height / 5, 135);
+  const diameter = Math.min(height / 4, 135);
 
   const toastingBegins = () => {
     navigation.navigate('Toasting');
   };
 
   const confirmCrispiness = () => {
+    if (isSimulator) {
+      navigation.navigate('Toasting');
+    }
+
     console.log('Send:', target);
     AsyncStorage.setItem('lastUsedCrispiness', target.toString());
 
@@ -67,7 +73,10 @@ export const CrispinessSelector = ({
   }, [target]);
 
   useEffect(() => {
-    if (toasterState.controller_state === 'TOASTING') {
+    if (
+      toasterState.controller_state === 'TOASTING' ||
+      toasterState.controller_state === 'DONE'
+    ) {
       toastingBegins();
       console.log('Toasting begins');
     }
@@ -80,12 +89,39 @@ export const CrispinessSelector = ({
     require('../assets/img/toast3.png'),
     require('../assets/img/toast4.png'),
     require('../assets/img/toast5.png'),
+    require('../assets/img/toast6.png'),
+    require('../assets/img/toast7.png'),
+    require('../assets/img/toast8.png'),
+    require('../assets/img/toast9.png'),
+    require('../assets/img/toast10.png'),
+    require('../assets/img/toast11.png'),
+    require('../assets/img/toast12.png'),
+    require('../assets/img/toast13.png'),
+    require('../assets/img/toast14.png'),
   ];
 
+  const [fadeAnim] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    return () => {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    };
+  }, []);
+
   return (
-    <View
+    <Animated.View
       style={{
         flex: 1,
+        opacity: fadeAnim,
         flexDirection: orientationIsPortrait ? 'column' : 'row',
         justifyContent: 'space-evenly',
         alignItems: 'center',
@@ -111,9 +147,9 @@ export const CrispinessSelector = ({
       ) : (
         <View style={{flex: 0.7, height: '100%'}}>
           <CrossfadeImage
-            duration={300}
+            duration={50}
             style={{width: '100%', height: '100%', resizeMode: 'contain'}}
-            source={images.at(Math.round(target / 20))}
+            source={images.at(Math.round((target / 100) * (images.length - 1)))}
           />
         </View>
       )}
@@ -151,18 +187,7 @@ export const CrispinessSelector = ({
             onValueChange={value => {
               setTarget(Math.round(value));
             }}
-            renderLabel={() => (
-              <></>
-              // <Text
-              //   style={{
-              //     textAlign: 'center',
-              //     padding: 20,
-              //     fontSize: 15,
-              //     color: 'white',
-              //   }}>
-              //   Crispiness
-              // </Text>
-            )}
+            showLabel={true}
             // trackStyle={{backgroundColor: 'rgba(143, 255, 160, .1)'}}
             maximumValue={100}
             minimumValue={0}
@@ -177,28 +202,29 @@ export const CrispinessSelector = ({
               borderRadius: diameter / 2,
               width: diameter,
               height: diameter,
-              backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
+              backgroundColor: '#5e2d16',
+              // backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
               justifyContent: 'center',
               alignItems: 'center',
               margin: 10,
             }}>
-            <AwesomeIcon name={'check'} size={50} color={'white'} />
+            <AwesomeIcon name={'power-off'} size={50} color={'white'} />
           </View>
         </TouchableOpacity>
-        <Text
+        {/* <Text
           style={{
-            color: 'brown',
+            color: '5e2d16',
             fontSize: 15,
             textAlign: 'center',
             paddingBottom: 20,
           }}>
-          Start
-        </Text>
+          Toast
+        </Text> */}
         {/* <Text style={{color: '#000', fontSize: 70, textAlign: 'center'}}>
-          {target}
+          {Math.round((target / 100) * images.length)}
         </Text> */}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
