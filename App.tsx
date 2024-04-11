@@ -324,7 +324,7 @@ function App(): React.JSX.Element {
         peripherals.set(peripheral.id, peripheral);
 
         // readCharacteristic(peripheral, TOAST_E_SERVICE_UUID, TOAST_E_CHAR_UUID);
-        startToasterNotifications({id: '59b53ab0-6c1b-a443-9e14-e698151c98ea'});
+        startToasterNotifications(peripheral);
       })
       .catch(error => console.log('error retrieving services', error));
   };

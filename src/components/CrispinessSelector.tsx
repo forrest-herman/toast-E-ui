@@ -20,10 +20,10 @@ import useDebounce from '../hooks/useDebounce';
 import {ToastPreviewCarousel} from './toastPreview';
 import {styles} from '../styles';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BigSlider from './BigSlider';
-import LinearGradient from 'react-native-linear-gradient';
+import GradientSlider from './GradientSlider';
 
 const height = Dimensions.get('window').height;
+const width = Dimensions.get('window').width;
 
 export const CrispinessSelector = ({
   target,
@@ -46,19 +46,20 @@ export const CrispinessSelector = ({
   ].map(Math.round);
   const a = 0.4 + target / 5;
 
-  const diameter = Math.min(height / 4, 135);
+  const diameter = Math.min(height / 4, 100);
 
   const toastingBegins = () => {
     navigation.navigate('Toasting');
   };
 
   const confirmCrispiness = () => {
-    if (isSimulator) {
-      navigation.navigate('Toasting');
-    }
-
     console.log('Send:', target);
     AsyncStorage.setItem('lastUsedCrispiness', target.toString());
+
+    if (isSimulator || true) {
+      navigation.navigate('Toasting');
+      return;
+    }
 
     writeTargetCrispinessCharacteristic((data = target));
     // TODO: add await.then() to this?
@@ -103,6 +104,15 @@ export const CrispinessSelector = ({
   const [fadeAnim] = useState(new Animated.Value(0));
 
   useEffect(() => {
+    // AsyncStorage.getItem('lastUsedCrispiness').then(response => {
+    //   console.log('response:', response);
+    //   console.log('responsetype:', typeof response);
+    //   if (response) {
+    //     const initTartget = parseInt(response);
+    //     setTarget(initTartget);
+    //   }
+    // });
+
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 500,
@@ -127,8 +137,19 @@ export const CrispinessSelector = ({
         alignItems: 'center',
         backgroundColor: '#e8e7e6',
       }}>
+      <View style={{flex: 0.6, height: '100%'}}>
+        <CrossfadeImage
+          duration={50}
+          style={{
+            width: orientationIsPortrait ? 300 : '100%',
+            height: '100%',
+            resizeMode: 'contain',
+          }}
+          source={images.at(Math.round((target / 100) * (images.length - 1)))}
+        />
+      </View>
       {orientationIsPortrait && (
-        <View style={styles.sectionContainer}>
+        <View style={{margin: 10}}>
           <Text
             style={[
               styles.highlight,
@@ -136,93 +157,66 @@ export const CrispinessSelector = ({
             ]}>
             Select your preference!
           </Text>
+        </View>
+      )}
 
-          {/* <Image style={{width: '100%'}} source={require('../img/toast0.png')} /> */}
-          {/* <SvgComponent/> */}
-          {/* <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M512 176.1C512 203 490.4 224 455.1 224H448v224c0 17.67-14.33 32-32 32H96c-17.67 0-32-14.33-32-32V224H56.89C21.56 224 0 203 0 176.1C0 112 96 32 256 32S512 112 512 176.1z"/></svg> */}
-        </View>
-      )}
-      {orientationIsPortrait ? (
-        <ToastPreviewCarousel target={target} setTarget={setTarget} />
-      ) : (
-        <View style={{flex: 0.7, height: '100%'}}>
-          <CrossfadeImage
-            duration={50}
-            style={{width: '100%', height: '100%', resizeMode: 'contain'}}
-            source={images.at(Math.round((target / 100) * (images.length - 1)))}
-          />
-        </View>
-      )}
-      <View style={{width: 140, height: '90%'}}>
-        <LinearGradient
-          colors={['#240d02', '#5e2d16', '#edb985']}
+      <View
+        style={{
+          flex: 0.6,
+          flexDirection: orientationIsPortrait ? 'column' : 'row',
+          justifyContent: orientationIsPortrait
+            ? 'space-between'
+            : 'space-evenly',
+          alignItems: 'center',
+          width: '100%',
+        }}>
+        <GradientSlider
+          width={orientationIsPortrait ? '90%' : 140}
+          height={orientationIsPortrait ? 80 : '90%'}
+          inputValue={target}
+          showIcons={true}
+          showLabel={true}
+          onValueChangeFn={value => {
+            setTarget(Math.round(value));
+          }}
+          horizontal={orientationIsPortrait}
+        />
+        <View
           style={{
-            flex: 1,
-            paddingLeft: 15,
-            paddingRight: 15,
-            borderRadius: 25,
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginVertical: 15,
           }}>
-          <AwesomeIcon
-            name={'fire-flame-curved'}
-            size={40}
-            color={`rgba(255, 255, 255, ${target / 100 + 0.1})`}
-            style={{
-              position: 'absolute',
-              alignSelf: 'center',
-              top: 15,
-            }}
-          />
-          <Octicon
-            name={'flame'}
-            size={20}
-            color={`rgba(255, 255, 255, ${1 - target / 100 + 0.1})`}
-            style={{
-              position: 'absolute',
-              alignSelf: 'center',
-              bottom: 15,
-            }}
-          />
-          <BigSlider
-            style={{width: '100%'}}
-            onValueChange={value => {
-              setTarget(Math.round(value));
-            }}
-            showLabel={true}
-            // trackStyle={{backgroundColor: 'rgba(143, 255, 160, .1)'}}
-            maximumValue={100}
-            minimumValue={0}
-            value={target}
-          />
-        </LinearGradient>
-      </View>
-      <View style={{alignItems: 'center'}}>
-        <TouchableOpacity onPress={confirmCrispiness}>
-          <View
-            style={{
-              borderRadius: diameter / 2,
-              width: diameter,
-              height: diameter,
-              backgroundColor: '#5e2d16',
-              // backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
-              justifyContent: 'center',
-              alignItems: 'center',
-              margin: 10,
-            }}>
-            <AwesomeIcon name={'power-off'} size={50} color={'white'} />
-          </View>
-        </TouchableOpacity>
-        {/* <Text
-          style={{
-            color: '5e2d16',
-            fontSize: 15,
-            textAlign: 'center',
-            paddingBottom: 20,
-          }}>
-          Toast
-        </Text> */}
-        {/* <Text style={{color: '#000', fontSize: 70, textAlign: 'center'}}>
+          <TouchableOpacity onPress={confirmCrispiness}>
+            <View
+              style={{
+                borderRadius: diameter / 2,
+                width: diameter,
+                height: diameter,
+                backgroundColor: '#5e2d16',
+                // backgroundColor: `rgba(${r}, ${g}, ${b}, ${a})`,
+                justifyContent: 'center',
+                alignItems: 'center',
+                // margin: 10,
+              }}>
+              <AwesomeIcon name={'power-off'} size={50} color={'white'} />
+            </View>
+          </TouchableOpacity>
+          {orientationIsPortrait && (
+            <Text
+              style={{
+                color: '#5e2d16',
+                fontSize: 15,
+                textAlign: 'center',
+                paddingVertical: 10,
+              }}>
+              Toast
+            </Text>
+          )}
+          {/* <Text style={{color: '#000', fontSize: 70, textAlign: 'center'}}>
           {Math.round((target / 100) * images.length)}
         </Text> */}
+        </View>
       </View>
     </Animated.View>
   );

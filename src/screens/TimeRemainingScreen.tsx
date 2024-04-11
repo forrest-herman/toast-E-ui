@@ -13,9 +13,6 @@ import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 import AwesomeIcon from 'react-native-vector-icons/FontAwesome6';
 
-import BigSlider from '../components/BigSlider';
-import LinearGradient from 'react-native-linear-gradient';
-
 import {AppContext} from '../../App';
 import {ToastEHeader} from '../components/Header.tsx';
 import {formatTime} from '../utils/helperFunctions';
@@ -38,7 +35,7 @@ var whoosh;
 Sound.setCategory('Playback');
 
 const TimeRemainingScreen = ({navigation}) => {
-  const [timeRemaining_sec, setTimeRemaining] = useState(134); // seconds
+  const [timeRemaining_sec, setTimeRemaining] = useState(75); // seconds
   const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
   const [percentageRemaining, setPercentageRemaining] = useState(99);
 
@@ -70,29 +67,30 @@ const TimeRemainingScreen = ({navigation}) => {
       // loaded successfully
       console.log('Loaded sound with duration: ' + whoosh.getDuration() + 's');
     });
+
     return () => {
       whoosh.release(); // Release the audio player resource
     };
   }, []);
 
-  useEffect(() => {
-    if (!isSimulator) {
-      setPercentageRemaining(
-        Math.round(
-          Math.abs(
-            100 -
-              (toasterState2.current_crispiness /
-                toasterState2.target_crispiness) *
-                100,
-          ),
-        ),
-      );
-    }
-  }, [toasterState2.current_crispiness]);
+  // useEffect(() => {
+  //   if (!isSimulator && false) {
+  //     setPercentageRemaining(
+  //       Math.round(
+  //         Math.abs(
+  //           100 -
+  //             (toasterState2.current_crispiness /
+  //               toasterState2.target_crispiness) *
+  //               100,
+  //         ),
+  //       ),
+  //     );
+  //   }
+  // }, [toasterState2.current_crispiness]);
 
   useEffect(() => {
     if (
-      Math.abs(toasterState2.time_remaining_estimate - timeRemaining_sec) > 3
+      Math.abs(toasterState2?.time_remaining_estimate - timeRemaining_sec) > 3
     ) {
       setTimeRemaining(toasterState2.time_remaining_estimate);
     } else if (
@@ -126,7 +124,7 @@ const TimeRemainingScreen = ({navigation}) => {
   // TODO: move this elsewhere
   const circleButtonRadius = 65;
   const height = Dimensions.get('window').height;
-  const diameter = Math.min(height / 4, 135);
+  const diameter = Math.min(height / 4, 100);
 
   return (
     <>
@@ -146,6 +144,7 @@ const TimeRemainingScreen = ({navigation}) => {
               flex: 1,
               flexDirection: orientationIsPortrait ? 'column' : 'row',
               justifyContent: 'space-between',
+              marginVertical: orientationIsPortrait ? 30 : 0,
             }}>
             <View
               style={{
@@ -154,31 +153,23 @@ const TimeRemainingScreen = ({navigation}) => {
                 alignItems: 'center',
                 marginHorizontal: 20,
               }}>
-              <GradientSlider
+              {/* <GradientSlider
                 // inputValue={toasterState2.current_crispiness}
-                inputValue={toasterState2.target_crispiness}
+                inputValue={10}
                 showIcons={false}
                 showLabel={false}
-                width={60}
-              />
+                width={orientationIsPortrait ? 300 : 60}
+                horizontal={orientationIsPortrait}
+                readOnly={true}
+              /> */}
             </View>
             <View
               style={{
                 flex: 0.6,
                 justifyContent: 'center',
                 alignItems: 'center',
-                flexDirection: orientationIsPortrait ? 'row' : 'column',
+                flexDirection: 'column',
               }}>
-              {/* <Text style={{fontSize: 30, paddingVertical: 10}}>
-              {toasterState2.controller_state}
-            </Text> */}
-              {developerMode && orientationIsPortrait && (
-                <Text style={{fontSize: 20, paddingVertical: 40}}>
-                  Current Cripiness: {toasterState2.current_crispiness} {'\n'}
-                  Target Cripiness: {toasterState2.target_crispiness}
-                </Text>
-              )}
-
               {toastingStatus === STATUS.DONE ? (
                 <Text
                   style={{
@@ -197,13 +188,6 @@ const TimeRemainingScreen = ({navigation}) => {
                     {formatTime(timeRemaining_sec)}
                   </Text>
                 </>
-              )}
-              {developerMode && orientationIsPortrait && (
-                <Text style={{fontSize: 20, paddingVertical: 40}}>
-                  Time remaining estimate:{' '}
-                  {toasterState2.time_remaining_estimate} {'\n'}
-                  Percentage remaining: {percentageRemaining}%
-                </Text>
               )}
             </View>
 
@@ -240,7 +224,8 @@ const TimeRemainingScreen = ({navigation}) => {
                     }}>
                     <AwesomeIcon
                       name={
-                        toasterState2.controller_state === STATUS.TOASTING
+                        toasterState2.controller_state === STATUS.TOASTING ||
+                        toastingStatus === STATUS.IDLE
                           ? 'xmark'
                           : 'arrow-rotate-left'
                       }
@@ -252,12 +237,13 @@ const TimeRemainingScreen = ({navigation}) => {
               </TouchableOpacity>
               <Text
                 style={{
-                  color: '5e2d16',
+                  color: '#5e2d16',
                   fontSize: 15,
                   textAlign: 'center',
                   paddingBottom: 20,
                 }}>
-                {toasterState2.controller_state === STATUS.TOASTING
+                {toasterState2.controller_state === STATUS.TOASTING ||
+                toastingStatus === STATUS.IDLE
                   ? 'Cancel'
                   : 'Reset'}
               </Text>

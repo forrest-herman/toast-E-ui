@@ -30,12 +30,12 @@ const ToastSelectionScreen = ({navigation}) => {
       />
       <SafeAreaView
         style={{
-          backgroundColor: Colors.lighter,
+          backgroundColor: '#e8e7e6',
           flex: 1,
         }}>
         <View style={{flex: 1}}>
           {orientationIsPortrait ? (
-            <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
+            <ToastEHeader />
           ) : (
             <ToastEHeader title="Select your preference" fontSize={30} />
           )}
