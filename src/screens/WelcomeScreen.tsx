@@ -1,5 +1,6 @@
 import React, {useState, useContext} from 'react';
 import {
+  Animated,
   Button,
   Dimensions,
   FlatList,
@@ -21,6 +22,7 @@ const height = Dimensions.get('window').height;
 const width = Dimensions.get('window').width;
 
 const WelcomeScreen = ({
+  visible = true,
   reconnectToPreviousDevice,
   devices = [],
   previousDeviceId,
@@ -28,19 +30,42 @@ const WelcomeScreen = ({
   const {setSettingsModalVisible, isSimulator, orientationIsPortrait} =
     useContext(AppContext);
 
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [show, setShow] = useState(false);
+
+  React.useEffect(() => {
+    if (visible) {
+      setShow(true);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    } else if (!visible) {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        setShow(false);
+        console.log('show false ');
+      });
+    }
+  }, [visible]);
+
   return (
-    <>
+    <Animated.View style={{flex: 1, opacity: fadeAnim}}>
       <SafeAreaView
         edges={['top']}
         style={{flex: 0, backgroundColor: styles.header.backgroundColor}}
       />
       <SafeAreaView
         style={{
-          backgroundColor: Colors.lighter,
+          backgroundColor: 'white',
           flex: 1,
         }}>
         <View style={{flex: 1}}>
-          <ToastEHeader setSettingsModalVisible={setSettingsModalVisible} />
+          <ToastEHeader />
           {devices.length > 0 || isSimulator ? (
             <View
               style={{
@@ -88,17 +113,11 @@ const WelcomeScreen = ({
                   setSettingsModalVisible={setSettingsModalVisible}
                 />
               </View>
-              {/* <FlatList
-                style={{marginTop: 5, flexGrow: 0, maxHeight: 500}}
-                data={devices}
-                renderItem={({item}) => <Text>{JSON.stringify(item)}</Text>}
-                keyExtractor={item => item?.id}
-              /> */}
             </View>
           )}
         </View>
       </SafeAreaView>
-    </>
+    </Animated.View>
   );
 };
 
