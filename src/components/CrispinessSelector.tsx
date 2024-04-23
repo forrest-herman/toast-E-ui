@@ -56,7 +56,7 @@ export const CrispinessSelector = ({
     console.log('Send:', target);
     AsyncStorage.setItem('lastUsedCrispiness', target.toString());
 
-    if (isSimulator || true) {
+    if (isSimulator) {
       navigation.navigate('Toasting');
       return;
     }
@@ -66,12 +66,12 @@ export const CrispinessSelector = ({
     // startNotifications({id: '3261042b-e99d-98d6-84ae-2786329fa5a6'});
   };
 
-  const handleSendTarget = useDebounce(confirmCrispiness, 1000);
+  // const handleSendTarget = useDebounce(confirmCrispiness, 1000);
 
-  useEffect(() => {
-    // new target value
-    // handleSendTarget();
-  }, [target]);
+  // useEffect(() => {
+  //   // new target value
+  //   // handleSendTarget();
+  // }, [target]);
 
   useEffect(() => {
     if (
