@@ -442,6 +442,7 @@ function App(): React.JSX.Element {
       })
       .catch(error => {
         console.log('Write error', error);
+        setToasterState({controller_state: 'IDLE'});
       });
   };
 
