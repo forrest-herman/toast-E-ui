@@ -36,8 +36,9 @@ Sound.setCategory('Playback');
 
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(75); // seconds
+  // const [lastTimePrediction, setLastPrediction] = useState(0); // seconds
   const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
-  const [percentageRemaining, setPercentageRemaining] = useState(99);
+  // const [percentageRemaining, setPercentageRemaining] = useState(99);
 
   const {
     toasterState2,
@@ -89,19 +90,25 @@ const TimeRemainingScreen = ({navigation}) => {
   // }, [toasterState2.current_crispiness]);
 
   useEffect(() => {
-    if (
-      Math.abs(toasterState2?.time_remaining_estimate - timeRemaining_sec) > 3
-    ) {
-      setTimeRemaining(toasterState2.time_remaining_estimate);
-    } else if (
-      timeRemaining_sec > 0 &&
-      toasterState2.controller_state === STATUS.TOASTING
-    ) {
-      setTimeout(() => {
-        setTimeRemaining(timeRemaining_sec - 1);
-      }, 1000);
-    }
-  }, [timeRemaining_sec]);
+    setTimeRemaining(toasterState2.time_remaining_estimate);
+  }, [toasterState2.time_remaining_estimate]);
+
+  // useEffect(() => {
+  //   if (lastTimePrediction != toasterState2.time_remaining_estimate) {
+  //     setTimeRemaining(toasterState2.time_remaining_estimate);
+  //     setLastPrediction(toasterState2.time_remaining_estimate);
+  //     console.log('not matching');
+  //   } else if (
+  //     timeRemaining_sec > 0 &&
+  //     toasterState2.controller_state === STATUS.TOASTING
+  //   ) {
+  //     console.log('matching');
+
+  //     setTimeout(() => {
+  //       setTimeRemaining(timeRemaining_sec - 1);
+  //     }, 1000);
+  //   }
+  // }, [timeRemaining_sec, toasterState2.time_remaining_estimate]);
 
   useEffect(() => {
     if (toasterState2.controller_state === STATUS.DONE) {
@@ -118,6 +125,8 @@ const TimeRemainingScreen = ({navigation}) => {
       setTimeout(() => {
         writeCrispReset();
       }, 5000);
+    } else if (toasterState2.controller_state !== STATUS.TOASTING) {
+      writeCrispReset();
     }
   }, [toasterState2.controller_state]);
 
