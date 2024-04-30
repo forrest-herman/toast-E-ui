@@ -35,7 +35,7 @@ var whoosh;
 Sound.setCategory('Playback');
 
 const TimeRemainingScreen = ({navigation}) => {
-  const [timeRemaining_sec, setTimeRemaining] = useState(75); // seconds
+  const [timeRemaining_sec, setTimeRemaining] = useState(5); // seconds
   // const [percentageRemaining, setPercentageRemaining] = useState(100);
 
   const {
@@ -76,7 +76,19 @@ const TimeRemainingScreen = ({navigation}) => {
   }, [toasterState.time_remaining_estimate]);
 
   useEffect(() => {
-    if (toasterState.controller_state === STATUS.DONE) {
+    if (isSimulator && timeRemaining_sec > 0) {
+      setTimeout(() => {
+        setTimeRemaining(timeRemaining_sec - 1);
+      }, 1000);
+    }
+    console.log('timeRemaining_sec: ', timeRemaining_sec);
+  }, [timeRemaining_sec]);
+
+  useEffect(() => {
+    if (
+      toasterState.controller_state === STATUS.DONE ||
+      (isSimulator && timeRemaining_sec <= 0)
+    ) {
       // Play the sound with an onEnd callback
       whoosh.play(success => {
         if (success) {
@@ -92,7 +104,7 @@ const TimeRemainingScreen = ({navigation}) => {
     } else if (toasterState.controller_state !== STATUS.TOASTING) {
       writeCrispReset();
     }
-  }, [toasterState.controller_state]);
+  }, [toasterState.controller_state, timeRemaining_sec]);
 
   // TODO: move this elsewhere
   const circleButtonRadius = 65;
@@ -143,7 +155,8 @@ const TimeRemainingScreen = ({navigation}) => {
                 alignItems: 'center',
                 flexDirection: 'column',
               }}>
-              {toasterState.controller_state === STATUS.DONE ? (
+              {toasterState.controller_state === STATUS.DONE ||
+              (isSimulator && timeRemaining_sec <= 0) ? (
                 <Text
                   style={{
                     fontSize: 50,
@@ -197,7 +210,8 @@ const TimeRemainingScreen = ({navigation}) => {
                     }}>
                     <AwesomeIcon
                       name={
-                        toasterState.controller_state === STATUS.DONE
+                        toasterState.controller_state === STATUS.DONE ||
+                        (isSimulator && timeRemaining_sec <= 0)
                           ? 'arrow-rotate-left'
                           : 'xmark'
                       }
@@ -214,7 +228,8 @@ const TimeRemainingScreen = ({navigation}) => {
                   textAlign: 'center',
                   paddingBottom: 20,
                 }}>
-                {toasterState.controller_state === STATUS.DONE
+                {toasterState.controller_state === STATUS.DONE ||
+                (isSimulator && timeRemaining_sec <= 0)
                   ? 'Reset'
                   : 'Cancel'}
               </Text>
