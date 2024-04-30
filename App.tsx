@@ -60,7 +60,6 @@ function App(): React.JSX.Element {
   });
 
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-  const [developerMode, setDeveloperMode] = useState(true);
   const [isSimulator, setIsSimulator] = useState(false); // Simulator or real device
   const [orientationIsPortrait, setOrientationPortrait] = useState(true);
 
@@ -99,7 +98,6 @@ function App(): React.JSX.Element {
           ...bleData,
           ...bleFunctions,
           setSettingsModalVisible,
-          developerMode,
           isSimulator,
           orientationIsPortrait,
           toasterState,
@@ -135,8 +133,6 @@ function App(): React.JSX.Element {
           animationType="slide">
           <SettingsModal
             setSettingsModalVisible={setSettingsModalVisible}
-            developerMode={developerMode}
-            setDeveloperMode={setDeveloperMode}
             startScan={startScan}
             stopScan={stopScan}
             isScanning={isScanning}
