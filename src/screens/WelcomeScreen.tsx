@@ -96,9 +96,9 @@ const WelcomeScreen = ({
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
-              <Text style={{fontSize: 15}}>
+              {/* <Text style={{fontSize: 15}}>
                 {devices.length} device(s) connected
-              </Text>
+              </Text> */}
               <Text style={{fontSize: 30}}>No Toast-E Connected</Text>
               <View style={{marginVertical: 20}}>
                 {previousDeviceId !== null && (

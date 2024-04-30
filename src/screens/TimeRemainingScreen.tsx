@@ -36,9 +36,7 @@ Sound.setCategory('Playback');
 
 const TimeRemainingScreen = ({navigation}) => {
   const [timeRemaining_sec, setTimeRemaining] = useState(75); // seconds
-  // const [lastTimePrediction, setLastPrediction] = useState(0); // seconds
-  const [toastingStatus, setToastingStatus] = useState(STATUS.IDLE); // TODO: replace with toasterState
-  // const [percentageRemaining, setPercentageRemaining] = useState(99);
+  // const [percentageRemaining, setPercentageRemaining] = useState(100);
 
   const {
     toasterState,
@@ -78,7 +76,6 @@ const TimeRemainingScreen = ({navigation}) => {
 
   useEffect(() => {
     if (toasterState.controller_state === STATUS.DONE) {
-      setToastingStatus(STATUS.DONE); // TODO: redundant
       // Play the sound with an onEnd callback
       whoosh.play(success => {
         if (success) {
@@ -145,7 +142,7 @@ const TimeRemainingScreen = ({navigation}) => {
                 alignItems: 'center',
                 flexDirection: 'column',
               }}>
-              {toastingStatus === STATUS.DONE ? (
+              {toasterState.controller_state === STATUS.DONE ? (
                 <Text
                   style={{
                     fontSize: 50,
