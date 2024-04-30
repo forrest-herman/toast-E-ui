@@ -41,20 +41,18 @@ const TimeRemainingScreen = ({navigation}) => {
   // const [percentageRemaining, setPercentageRemaining] = useState(99);
 
   const {
-    toasterState2,
+    toasterState,
     writeCancelCharacteristic,
     writeCrispReset,
-    stopToasterNotifications,
-    setSettingsModalVisible,
-    developerMode,
     isSimulator,
     orientationIsPortrait,
   } = useContext(AppContext);
 
   const cancelResetBtnFunc = () => {
-    // navigation.navigate('Selection');
-    // if (toasterState2.controller_state === STATUS.TOASTING) TODO: remove this temp
-    writeCancelCharacteristic();
+    if (isSimulator) navigation.navigate('Selection');
+    if (toasterState.controller_state === STATUS.TOASTING) {
+      writeCancelCharacteristic();
+    } else writeCrispReset();
   };
 
   useEffect(() => {
@@ -74,44 +72,12 @@ const TimeRemainingScreen = ({navigation}) => {
     };
   }, []);
 
-  // useEffect(() => {
-  //   if (!isSimulator && false) {
-  //     setPercentageRemaining(
-  //       Math.round(
-  //         Math.abs(
-  //           100 -
-  //             (toasterState2.current_crispiness /
-  //               toasterState2.target_crispiness) *
-  //               100,
-  //         ),
-  //       ),
-  //     );
-  //   }
-  // }, [toasterState2.current_crispiness]);
+  useEffect(() => {
+    setTimeRemaining(toasterState.time_remaining_estimate);
+  }, [toasterState.time_remaining_estimate]);
 
   useEffect(() => {
-    setTimeRemaining(toasterState2.time_remaining_estimate);
-  }, [toasterState2.time_remaining_estimate]);
-
-  // useEffect(() => {
-  //   if (lastTimePrediction != toasterState2.time_remaining_estimate) {
-  //     setTimeRemaining(toasterState2.time_remaining_estimate);
-  //     setLastPrediction(toasterState2.time_remaining_estimate);
-  //     console.log('not matching');
-  //   } else if (
-  //     timeRemaining_sec > 0 &&
-  //     toasterState2.controller_state === STATUS.TOASTING
-  //   ) {
-  //     console.log('matching');
-
-  //     setTimeout(() => {
-  //       setTimeRemaining(timeRemaining_sec - 1);
-  //     }, 1000);
-  //   }
-  // }, [timeRemaining_sec, toasterState2.time_remaining_estimate]);
-
-  useEffect(() => {
-    if (toasterState2.controller_state === STATUS.DONE) {
+    if (toasterState.controller_state === STATUS.DONE) {
       setToastingStatus(STATUS.DONE); // TODO: redundant
       // Play the sound with an onEnd callback
       whoosh.play(success => {
@@ -125,10 +91,10 @@ const TimeRemainingScreen = ({navigation}) => {
       setTimeout(() => {
         writeCrispReset();
       }, 5000);
-    } else if (toasterState2.controller_state !== STATUS.TOASTING) {
+    } else if (toasterState.controller_state !== STATUS.TOASTING) {
       writeCrispReset();
     }
-  }, [toasterState2.controller_state]);
+  }, [toasterState.controller_state]);
 
   // TODO: move this elsewhere
   const circleButtonRadius = 65;
@@ -163,7 +129,7 @@ const TimeRemainingScreen = ({navigation}) => {
                 marginHorizontal: 20,
               }}>
               {/* <GradientSlider
-                // inputValue={toasterState2.current_crispiness}
+                // inputValue={toasterState.current_crispiness}
                 inputValue={10}
                 showIcons={false}
                 showLabel={false}
@@ -233,7 +199,7 @@ const TimeRemainingScreen = ({navigation}) => {
                     }}>
                     <AwesomeIcon
                       name={
-                        toasterState2.controller_state === STATUS.TOASTING ||
+                        toasterState.controller_state === STATUS.TOASTING ||
                         toastingStatus === STATUS.IDLE
                           ? 'xmark'
                           : 'arrow-rotate-left'
@@ -251,39 +217,11 @@ const TimeRemainingScreen = ({navigation}) => {
                   textAlign: 'center',
                   paddingBottom: 20,
                 }}>
-                {toasterState2.controller_state === STATUS.TOASTING ||
+                {toasterState.controller_state === STATUS.TOASTING ||
                 toastingStatus === STATUS.IDLE
                   ? 'Cancel'
                   : 'Reset'}
               </Text>
-              {/* <TouchableOpacity onPress={cancelResetBtnFunc}>
-                <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                  <PercentageCircle
-                    percentage={percentageRemaining}
-                    radius={circleButtonRadius + 6}
-                  />
-                  <View
-                    style={{
-                      borderRadius: circleButtonRadius,
-                      width: circleButtonRadius * 2,
-                      height: circleButtonRadius * 2,
-                      backgroundColor: 'brown',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}>
-                    <Text
-                      style={{
-                        color: '#F3F3F3',
-                        fontSize: 35,
-                        textAlign: 'center',
-                      }}>
-                      {toasterState2.controller_state === STATUS.TOASTING
-                        ? 'Cancel'
-                        : 'Reset'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity> */}
             </View>
           </View>
         </View>

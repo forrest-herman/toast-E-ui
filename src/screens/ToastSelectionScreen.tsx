@@ -1,6 +1,5 @@
-import React, {useState, useContext, useEffect} from 'react';
+import React, {useState, useContext} from 'react';
 import {SafeAreaView, View} from 'react-native';
-import {Colors} from 'react-native/Libraries/NewAppScreen';
 
 import {ToastEHeader} from '../components/Header.tsx';
 import {CrispinessSelector} from '../components/CrispinessSelector.tsx';
@@ -13,13 +12,11 @@ const ToastSelectionScreen = ({navigation}) => {
   const [toastTarget, setToastTarget] = useState(0);
   const {
     toasterState,
-    setSettingsModalVisible,
     startToasterNotifications,
     stopToasterNotifications,
     writeTargetCrispinessCharacteristic,
     orientationIsPortrait,
     isSimulator,
-    toasterState2,
   } = useContext(AppContext);
 
   return (
@@ -43,7 +40,7 @@ const ToastSelectionScreen = ({navigation}) => {
             target={toastTarget}
             setTarget={setToastTarget}
             navigation={navigation}
-            toasterState={toasterState2}
+            toasterState={toasterState}
             writeTargetCrispinessCharacteristic={
               writeTargetCrispinessCharacteristic
             }
