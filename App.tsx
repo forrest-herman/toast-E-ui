@@ -1,8 +1,6 @@
 import React, {useState, useEffect, createContext} from 'react';
 import {Modal, Dimensions} from 'react-native';
 
-import useBLE from './src/hooks/useBLE.tsx';
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeviceInfo from 'react-native-device-info';
 
@@ -16,6 +14,9 @@ import WelcomeScreen from './src/screens/WelcomeScreen.tsx';
 
 // components
 import SettingsModal from './src/components/SettingsModal.tsx';
+
+// hooks
+import useBLE from './src/hooks/useBLE.tsx';
 
 export const AppContext = createContext(null);
 
@@ -38,7 +39,7 @@ function App(): React.JSX.Element {
       setPreviousDeviceId(deviceId);
     });
 
-    getOrientation(); // TODO: REMOVE THIS?
+    getOrientation();
 
     DeviceInfo.isEmulator().then(isEmulator => {
       setIsSimulator(isEmulator);
@@ -62,7 +63,6 @@ function App(): React.JSX.Element {
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [isSimulator, setIsSimulator] = useState(false); // Simulator or real device
   const [orientationIsPortrait, setOrientationPortrait] = useState(true);
-
   const [
     bleData,
     toasterState,
