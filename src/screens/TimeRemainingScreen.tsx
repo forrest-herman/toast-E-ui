@@ -71,6 +71,7 @@ const TimeRemainingScreen = ({navigation}) => {
   }, []);
 
   useEffect(() => {
+    if (isSimulator) return;
     setTimeRemaining(toasterState.time_remaining_estimate);
   }, [toasterState.time_remaining_estimate]);
 
@@ -196,10 +197,9 @@ const TimeRemainingScreen = ({navigation}) => {
                     }}>
                     <AwesomeIcon
                       name={
-                        toasterState.controller_state === STATUS.TOASTING ||
-                        toastingStatus === STATUS.IDLE
-                          ? 'xmark'
-                          : 'arrow-rotate-left'
+                        toasterState.controller_state === STATUS.DONE
+                          ? 'arrow-rotate-left'
+                          : 'xmark'
                       }
                       size={50}
                       color={'white'}
@@ -214,10 +214,9 @@ const TimeRemainingScreen = ({navigation}) => {
                   textAlign: 'center',
                   paddingBottom: 20,
                 }}>
-                {toasterState.controller_state === STATUS.TOASTING ||
-                toastingStatus === STATUS.IDLE
-                  ? 'Cancel'
-                  : 'Reset'}
+                {toasterState.controller_state === STATUS.DONE
+                  ? 'Reset'
+                  : 'Cancel'}
               </Text>
             </View>
           </View>
