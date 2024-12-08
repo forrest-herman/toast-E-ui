@@ -4,7 +4,7 @@ This App was created to interface with the Firmware on the Toast-E device.
 
 ## Functionality
 
-- [ ] Send and receive BLE messages with the Raspberry Pi firmware
+- [x] Send and receive BLE messages with the Raspberry Pi firmware
 - [x] Select a desired crispiness level
 
 # Development
